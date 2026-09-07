@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Punições - Brasil RP</title>
+    <style>
+        /* ================= ESTILOS (CSS - CLEAN E BRASIL) ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        /* Navbar Corrigida e com Logo */
+        nav {
+            background-color: #181818;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #009c3b;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffdf00;
+            letter-spacing: 1px;
+        }
+
+        .nav-brand img {
+            height: 35px;
+            border-radius: 6px;
+            margin-right: 12px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px; 
+            align-items: center;
+        }
+
+        .nav-links button {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .nav-links button:hover {
+            background-color: rgba(255, 223, 0, 0.1);
+            color: #ffdf00;
+        }
+
+        .nav-links .btn-logout {
+            color: #ff4444;
+        }
+        .nav-links .btn-logout:hover {
+            background-color: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+        }
+
+        /* Container Padrão */
+        .page-container {
+            padding: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .active { display: block; }
+
+        /* Login Box */
+        #page-login {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1e1e1e 0%, #121212 100%);
+            position: relative;
+        }
+
+        .login-box {
+            background-color: #181818;
+            padding: 50px 40px;
+            border-radius: 12px;
+            width: 420px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border-top: 5px solid #009c3b;
+        }
+
+        .login-box h2 {
+            color: #fff;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .logo {
+            max-width: 160px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+        }
+
+        /* Inputs Modernos */
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background-color: #222;
+            color: white;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #009c3b;
+            background-color: #2a2a2a;
+        }
+
+        /* Botões Globais */
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            transition: transform 0.1s, filter 0.3s;
+        }
+
+        button:active { transform: scale(0.98); }
+        
+        .btn-green { background-color: #009c3b; color: white; margin-top: 10px; }
+        .btn-green:hover { filter: brightness(1.1); box-shadow: 0 4px 15px rgba(0, 156, 59, 0.3); }
+
+        .btn-large {
+            font-size: 1.2rem;
+            padding: 18px;
+            margin-top: 25px;
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 25px;
+        }
+
+        /* Suporte Discreto no Cantinho */
+        .support-corner {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #555;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .support-corner:hover {
+            color: #5865F2; /* Azul Discord ao passar o mouse */
+        }
+
+        /* Dashboard */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .card {
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #181818;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { font-size: 1rem; color: #aaa; margin-bottom: 10px; font-weight: 500; }
+        .card h1 { font-size: 2.5rem; color: #fff; }
+
+        .card-green { border-bottom: 4px solid #009c3b; }
+        .card-yellow { border-bottom: 4px solid #ffdf00; }
+        .card-blue { border-bottom: 4px solid #002776; }
+        .card-red { border-bottom: 4px solid #ff4444; }
+
+        /* Calculadora e Formulários */
+        .calc-form, .add-box, .webhook-box {
+            background-color: #181818;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 25px 0;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #009c3b; }
+
+        .rule-item {
+            background-color: #222;
+            padding: 12px 15px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #333;
+            transition: border 0.2s;
+        }
+        .rule-item:hover { border-color: #555; }
+        .rule-item input { width: auto; margin-right: 12px; margin-bottom: 0; transform: scale(1.2); cursor: pointer; }
+        .rule-item label { cursor: pointer; width: 100%; color: #ddd; }
+
+        .calc-result {
+            background-color: #222;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 5px solid #009c3b;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        .calc-result span { font-weight: bold; color: #ffdf00; }
+
+        /* Botões de Seleção de Tipo */
+        .tipo-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .btn-tipo {
+            background-color: #222;
+            color: #888;
+            border: 1px solid #333;
+            margin-bottom: 0;
+            transition: all 0.3s;
+        }
+        .btn-tipo.active {
+            background-color: rgba(0, 156, 59, 0.15);
+            color: #009c3b;
+            border-color: #009c3b;
+        }
+
+        /* Tabelas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background-color: #181818;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        th { background-color: #222; color: #fff; font-weight: 600; }
+        tr:hover td { background-color: #222; }
+
+        .add-box, .webhook-box { display: flex; flex-direction: column; gap: 5px; }
+        .webhook-box label { font-weight: 500; color: #ccc; margin-top: 15px; margin-bottom: 5px; }
+        
+        .action-btns button { width: auto; padding: 6px 12px; margin-right: 5px; margin-bottom: 0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. PÁGINA DE LOGIN -->
+    <div id="page-login" class="page-container active">
+        <div class="login-box">
+            <img src="image_79b87e.jpg" alt="Brasil RP Logo" class="logo" onerror="this.style.display='none'">
+            <h2>Punições Legal</h2>
+            <input type="text" id="login-user" placeholder="Login do Staff">
+            <input type="password" id="login-pass" placeholder="Senha">
+            <button onclick="realizarLogin()" class="btn-green">Entrar</button>
+            <p class="footer-text">Desenvolvido por Valkkyria optimization.</p>
+        </div>
+        <!-- Botão Suporte Discreto -->
+        <a href="https://discord.gg/VtyrvbyEqx" target="_blank" class="support-corner">Suporte Discord</a>
+    </div>
+
+    <!-- NAVBAR (Visível apenas logado) -->
+    <nav id="navbar" style="display: none;">
+        <div class="nav-brand">
+            <img src="image_79b87e.jpg" alt="Logo" onerror="this.style.display='none'">
+            Brasil RP - Staff
+        </div>
+        <div class="nav-links">
+            <button onclick="navegar('page-dashboard')">Dashboard</button>
+            <button onclick="navegar('page-calculadora')">Calculadora</button>
+            <button id="btn-nav-regras" onclick="navegar('page-regras')">Gerenciar Punições</button>
+            <button id="btn-nav-admin" onclick="navegar('page-admin')">Gerenciar Logins</button>
+            <button id="btn-nav-webhooks" onclick="navegar('page-webhooks')">Webhooks</button>
+            <button onclick="sair()" class="btn-logout">Sair</button>
+        </div>
+    </nav>
+
+    <!-- 5. PÁGINA DE DASHBOARD -->
+    <div id="page-dashboard" class="page-container" style="display: none;">
+        <h2>Visão Geral</h2>
+        <div class="dashboard-cards">
+            <div class="card card-green">
+                <h3>Punições Registradas</h3>
+                <h1 id="dash-total">0</h1>
+            </div>
+            <div class="card card-yellow">
+                <h3>Advertências</h3>
+                <h1 id="dash-adv">0</h1>
+            </div>
+            <div class="card card-blue">
+                <h3>Serviços Penais</h3>
+                <h1 id="dash-servicos">0</h1>
+            </div>
+            <div class="card card-red">
+                <h3>Banimentos</h3>
+                <h1 id="dash-bans">0</h1>
+            </div>
+        </div>
+        <button class="btn-green btn-large" onclick="navegar('page-calculadora')">Nova Punição</button>
+    </div>
+
+    <!-- 6. PÁGINA CALCULADORA -->
+    <div id="page-calculadora" class="page-container" style="display: none;">
+        <h2>Calculadora de Punições</h2>
+        <div class="calc-form">
+            <div class="input-group">
+                <input type="text" id="calc-jogador" placeholder="ID do Jogador Punido">
+                <input type="text" id="calc-staff" placeholder="ID do Staff Aplicador">
+                <input type="url" id="calc-video" placeholder="Link do Vídeo (Provas)">
+            </div>
+            
+            <div class="rules-container">
+                <h3 style="margin-top: 15px; color: #ccc;">Selecione as Infrações</h3>
+                <div id="rules-list" class="rules-grid">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <div class="calc-result">
+                <h3 style="margin-bottom: 10px;">Resultado da Punição</h3>
+                <p>Meses de Prisão: <span id="res-prisao">0</span></p>
+                <p>Status de Banimento: <span id="res-ban">Nenhum</span></p>
+                <p>Advertência: <span id="res-adv">Nenhuma</span></p>
+                <button onclick="aplicarPunicao()" class="btn-green" style="margin-top: 15px;">Aplicar Punição e Enviar Discord</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PÁGINA DE GERENCIAMENTO DE PUNIÇÕES -->
+    <div id="page-regras" class="page-container" style="display: none;">
+        <h2>Gerenciamento do Código Penal</h2>
+        <div class="add-box">
+            <input type="text" id="nova-regra-nome" placeholder="Nome da Infração (ex: RDM)">
+            
+            <!-- Botões de Tipo -->
+            <div class="tipo-buttons">
+                <button type="button" class="btn-tipo active" onclick="selecionarTipo('PRISÃO', this)">Prisão</button>
+                <button type="button" class="btn-tipo" onclick="selecionarTipo('BANIMENTO', this)">Banimento</button>
+                <button type="button" class="btn-tipo" onclick="selecionarTipo('ADVERTÊNCIA', this)">Advertência</button>
+            </div>
+            <input type="hidden" id="nova-regra-tipo" value="PRISÃO">
+
+            <input type="text" id="nova-regra-valor" placeholder="Valor (ex: 500 meses, ou PERM)">
+            <button id="btn-add-regra" onclick="adicionarRegra()" class="btn-green">Adicionar Regra</button>
+        </div>
+        <table id="tabela-regras">
+            <thead>
+                <tr>
+                    <th>Infração</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-regras">
+                <!-- Gerado via JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. PÁGINA DE GERENCIAMENTO DE LOGINS -->
+    <div id="page-admin" class="page-container" style="display: none;">
+        <h2>Controle de Acesso Staff</h2>
+        <div class="add-box">
+            <input type="text" id="novo-login" placeholder="Novo Login (Qualquer formato)">
+            <input type="text" id="nova-senha" placeholder="Nova Senha">
+            <button onclick="adicionarUsuario()" class="btn-green">Criar Acesso</button>
+        </div>
+        <ul id="lista-usuarios" style="list-style: none; margin-top: 20px;">
+            <!-- Gerado via JS -->
+        </ul>
+    </div>
+
+    <!-- 2. PÁGINA DE WEBHOOKS -->
+    <div id="page-webhooks" class="page-container" style="display: none;">
+        <h2>Configuração de Integração Discord</h2>
+        <div class="webhook-box">
+            <label>Webhook - Logs de Acesso (Login)</label>
+            <input type="url" id="webhook-login" placeholder="https://discord.com/api/webhooks/...">
+
+            <label>Webhook - Prisões / Camisa de Força</label>
+            <input type="url" id="webhook-prisao" placeholder="https://discord.com/api/webhooks/...">
+            
+            <label>Webhook - Banimentos</label>
+            <input type="url" id="webhook-ban" placeholder="https://discord.com/api/webhooks/...">
+            
+            <label>Webhook - Advertências / Serviços</label>
+            <input type="url" id="webhook-adv" placeholder="https://discord.com/api/webhooks/...">
+            
+            <button onclick="salvarWebhooks()" class="btn-green" style="margin-top: 15px;">Salvar Configurações</button>
+        </div>
+    </div>
+
+    <!-- ================= FUNCIONAMENTO (JAVASCRIPT) ================= -->
+    <script>
+        // --- DADOS INICIAIS ---
+        const regrasPadrao = [
+            { id: 1, nome: "Metagaming", tipo: "BANIMENTO", valor: "1 DIA" },
+            { id: 2, nome: "Powergaming", tipo: "PRISÃO", valor: "100" },
+            { id: 3, nome: "Combat Logging (CL)", tipo: "PRISÃO", valor: "3000" },
+            { id: 4, nome: "Falsificação de provas", tipo: "BANIMENTO", valor: "PERM" },
+            { id: 5, nome: "Aviso Verbal / Conduta", tipo: "ADVERTÊNCIA", valor: "1 AVISO" }
+        ];
+
+        // Limpeza do antigo 'admin' e consagração do Thiago como único Master
+        let usuariosSalvos = JSON.parse(localStorage.getItem('brp_users')) || [];
+        
+        // Se a lista estiver vazia ou tiver apenas o antigo admin, reseta tudo.
+        if (usuariosSalvos.length === 0 || (usuariosSalvos.length === 1 && usuariosSalvos[0].login === 'admin')) {
+            usuariosSalvos = [{ login: 'Thiago', senha: 'Thiago0133' }];
+            localStorage.setItem('brp_users', JSON.stringify(usuariosSalvos));
+        } else {
+            // Garante que o Thiago existe
+            if (!usuariosSalvos.find(u => u.login === 'Thiago')) {
+                usuariosSalvos.push({ login: 'Thiago', senha: 'Thiago0133' });
+            }
+            // Remove qualquer resquício do admin antigo
+            usuariosSalvos = usuariosSalvos.filter(u => u.login !== 'admin');
+            localStorage.setItem('brp_users', JSON.stringify(usuariosSalvos));
+        }
+
+        if (!localStorage.getItem('brp_rules')) localStorage.setItem('brp_rules', JSON.stringify(regrasPadrao));
+        if (!localStorage.getItem('brp_stats')) localStorage.setItem('brp_stats', JSON.stringify({ total: 0, adv: 0, servicos: 0, bans: 0 }));
+
+        let usuarioLogado = "";
+
+        // --- NAVEGAÇÃO E AUTENTICAÇÃO ---
+        function realizarLogin() {
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            const users = JSON.parse(localStorage.getItem('brp_users'));
+
+            const validUser = users.find(u => u.login === user && u.senha === pass);
+            if (validUser) {
+                usuarioLogado = validUser.login;
+                
+                document.getElementById('page-login').style.display = 'none';
+                document.getElementById('navbar').style.display = 'flex';
+                
+                // Sistema de Permissões
+                const isMaster = (usuarioLogado === 'Thiago');
+                document.getElementById('btn-nav-regras').style.display = isMaster ? '' : 'none';
+                document.getElementById('btn-nav-admin').style.display = isMaster ? '' : 'none';
+                document.getElementById('btn-nav-webhooks').style.display = isMaster ? '' : 'none';
+                
+                navegar('page-dashboard');
+
+                // Envia webhook silenciosa avisando quem logou
+                enviarLogLogin(usuarioLogado);
+            } else {
+                alert("Login ou senha incorretos!");
+            }
+        }
+
+        function sair() {
+            usuarioLogado = "";
+            document.querySelectorAll('.page-container').forEach(el => el.style.display = 'none');
+            document.getElementById('navbar').style.display = 'none';
+            document.getElementById('page-login').style.display = 'flex';
+            document.getElementById('login-user').value = '';
+            document.getElementById('login-pass').value = '';
+        }
+
+        function navegar(pageId) {
+            if (!usuarioLogado) return;
+            if (usuarioLogado !== 'Thiago' && (pageId === 'page-regras' || pageId === 'page-admin' || pageId === 'page-webhooks')) {
+                alert("Você não tem permissão para acessar esta página.");
+                return;
+            }
+
+            document.querySelectorAll('.page-container').forEach(el => el.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+            
+            if (pageId === 'page-regras') carregarRegras();
+            if (pageId === 'page-admin') carregarUsuarios();
+            if (pageId === 'page-calculadora') carregarCalculadora();
+            if (pageId === 'page-webhooks') carregarWebhooks();
+            if (pageId === 'page-dashboard') atualizarDashboard();
+        }
+
+        // --- DASHBOARD ---
+        function atualizarDashboard() {
+            const stats = JSON.parse(localStorage.getItem('brp_stats'));
+            document.getElementById('dash-total').innerText = stats.total;
+            document.getElementById('dash-adv').innerText = stats.adv;
+            document.getElementById('dash-servicos').innerText = stats.servicos;
+            document.getElementById('dash-bans').innerText = stats.bans;
+        }
+
+        // --- CALCULADORA ---
+        let totalPrisao = 0;
+        let statusBanimento = "Nenhum";
+        let temAdvertencia = false;
+        let regrasSelecionadas = [];
+
+        function carregarCalculadora() {
+            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+            const list = document.getElementById('rules-list');
+            list.innerHTML = '';
+            
+            rules.forEach(rule => {
+                const div = document.createElement('div');
+                div.className = 'rule-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="rule-${rule.id}" value="${rule.id}" onchange="recalcular()">
+                    <label for="rule-${rule.id}">${rule.nome} <br><small style="color:#888;">(${rule.valor} - ${rule.tipo})</small></label>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function recalcular() {
+            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+            const checkboxes = document.querySelectorAll('.rules-grid input[type="checkbox"]:checked');
+            
+            totalPrisao = 0;
+            statusBanimento = "Nenhum";
+            temAdvertencia = false;
+            regrasSelecionadas = [];
+
+            checkboxes.forEach(box => {
+                const rule = rules.find(r => r.id == box.value);
+                regrasSelecionadas.push(rule.nome);
+                
+                if (rule.tipo.includes("PRISÃO") || rule.tipo.includes("CAMISA DE FORÇA")) {
+                    totalPrisao += parseInt(rule.valor) || 0;
+                } else if (rule.tipo.includes("BANIMENTO")) {
+                    statusBanimento = rule.valor;
+                } else if (rule.tipo.includes("ADVERTÊNCIA") || rule.tipo.includes("ADVERTENCIA")) {
+                    temAdvertencia = true;
+                }
+            });
+
+            document.getElementById('res-prisao').innerText = totalPrisao;
+            document.getElementById('res-ban').innerText = statusBanimento;
+            document.getElementById('res-adv').innerText = temAdvertencia ? "Aplicada" : "Nenhuma";
+        }
+
+        function aplicarPunicao() {
+            const idJogador = document.getElementById('calc-jogador').value;
+            const idStaff = document.getElementById('calc-staff').value;
+            const video = document.getElementById('calc-video').value;
+
+            if (!idJogador || regrasSelecionadas.length === 0) {
+                alert("Preencha o ID do jogador e selecione pelo menos uma infração.");
+                return;
+            }
+
+            const stats = JSON.parse(localStorage.getItem('brp_stats'));
+            stats.total += 1;
+            if (statusBanimento !== "Nenhum") stats.bans += 1;
+            if (temAdvertencia) stats.adv += 1;
+            localStorage.setItem('brp_stats', JSON.stringify(stats));
+            
+            enviarParaDiscord(idJogador, idStaff, video);
+            
+            alert("Punição aplicada e registrada!");
+            document.querySelectorAll('.rules-grid input[type="checkbox"]').forEach(c => c.checked = false);
+            document.getElementById('calc-jogador').value = '';
+            document.getElementById('calc-video').value = '';
+            recalcular();
+            atualizarDashboard();
+        }
+
+        // --- WEBHOOKS E DISCORD ---
+        function carregarWebhooks() {
+            document.getElementById('webhook-login').value = localStorage.getItem('brp_wh_login') || '';
+            document.getElementById('webhook-prisao').value = localStorage.getItem('brp_wh_prisao') || '';
+            document.getElementById('webhook-ban').value = localStorage.getItem('brp_wh_ban') || '';
+            document.getElementById('webhook-adv').value = localStorage.getItem('brp_wh_adv') || '';
+        }
+
+        function salvarWebhooks() {
+            localStorage.setItem('brp_wh_login', document.getElementById('webhook-login').value);
+            localStorage.setItem('brp_wh_prisao', document.getElementById('webhook-prisao').value);
+            localStorage.setItem('brp_wh_ban', document.getElementById('webhook-ban').value);
+            localStorage.setItem('brp_wh_adv', document.getElementById('webhook-adv').value);
+            alert("Webhooks salvas com sucesso!");
+        }
+
+        // Função de envio do log de login
+        function enviarLogLogin(user) {
+            const webhookUrl = localStorage.getItem('brp_wh_login');
+            if (!webhookUrl) return;
+
+            const embed = {
+                title: "🔐 NOVO ACESSO - SISTEMA LEGAL",
+                color: 39270, // Verde Escuro
+                description: `O Staff **${user}** acabou de fazer login na calculadora de punições.`,
+                timestamp: new Date().toISOString()
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [embed] })
+            }).catch(console.error);
+        }
+
+        function enviarParaDiscord(idJogador, idStaff, video) {
+            let webhookUrl = "";
+            let colorHex = "";
+            let penalidadeTexto = "";
+
+            if (statusBanimento !== "Nenhum") {
+                webhookUrl = localStorage.getItem('brp_wh_ban');
+                colorHex = 16711680; // Vermelho
+                penalidadeTexto = `BANIMENTO: ${statusBanimento}`;
+            } else if (totalPrisao > 0) {
+                webhookUrl = localStorage.getItem('brp_wh_prisao');
+                colorHex = 16753920; // Laranja
+                penalidadeTexto = `${totalPrisao} Meses de Prisão`;
+            } else if (temAdvertencia) {
+                webhookUrl = localStorage.getItem('brp_wh_adv');
+                colorHex = 16776960; // Amarelo
+                penalidadeTexto = "ADVERTÊNCIA APLICADA";
+            }
+
+            if (!webhookUrl) {
+                console.error("Nenhuma webhook configurada para este tipo de punição.");
+                return;
+            }
+
+            const embed = {
+                title: "⚠️ NOVA PUNIÇÃO - BRASIL RP",
+                color: colorHex,
+                fields: [
+                    { name: "Passaporte Punido", value: idJogador, inline: true },
+                    { name: "Staff Responsável", value: idStaff || "Não informado", inline: true },
+                    { name: "Motivos (Infrações)", value: regrasSelecionadas.join("\n") },
+                    { name: "Penalidade Calculada", value: penalidadeTexto },
+                    { name: "Provas (Vídeo)", value: video ? `[Clique para assistir](${video})` : "Nenhum vídeo anexado" }
+                ],
+                footer: { text: "Calculadora Legal - Desenvolvido por Valkkyria optimization" },
+                timestamp: new Date().toISOString()
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [embed] })
+            }).catch(err => console.error("Erro ao enviar Webhook:", err));
+        }
+
+        // --- GERENCIAMENTO DE REGRAS ---
+        let regraEditandoId = null;
+
+        function selecionarTipo(tipo, btnElement) {
+            document.getElementById('nova-regra-tipo').value = tipo;
+            document.querySelectorAll('.btn-tipo').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        function carregarRegras() {
+            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+            const tbody = document.getElementById('tbody-regras');
+            tbody.innerHTML = '';
+            rules.forEach(r => {
+                let badgeColor = r.tipo.includes('BAN') ? '#ff4444' : (r.tipo.includes('ADV') ? '#ffdf00' : '#009c3b');
+                let textColor = r.tipo.includes('ADV') ? '#000' : '#fff';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: 500;">${r.nome}</td>
+                        <td><span style="background:${badgeColor}; color:${textColor}; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">${r.tipo}</span></td>
+                        <td>${r.valor}</td>
+                        <td class="action-btns">
+                            <button onclick="editarRegra(${r.id})" style="background:#ffdf00; color:#121212;">Editar</button>
+                            <button onclick="removerRegra(${r.id})" style="background:#ff4444; color:#fff;">Excluir</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function editarRegra(id) {
+            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+            const rule = rules.find(r => r.id === id);
+            
+            if(rule) {
+                document.getElementById('nova-regra-nome').value = rule.nome;
+                document.getElementById('nova-regra-valor').value = rule.valor;
+                
+                let tipoFormatado = rule.tipo.includes("CAMISA") ? "PRISÃO" : rule.tipo;
+                const btn = Array.from(document.querySelectorAll('.btn-tipo')).find(b => b.innerText.toUpperCase() === tipoFormatado);
+                if(btn) selecionarTipo(tipoFormatado, btn);
+                
+                regraEditandoId = id;
+                const btnAdd = document.getElementById('btn-add-regra');
+                btnAdd.innerText = "Salvar Edição";
+                btnAdd.style.backgroundColor = "#ffdf00";
+                btnAdd.style.color = "#121212";
+                
+                document.getElementById('nova-regra-nome').focus();
+            }
+        }
+
+        function adicionarRegra() {
+            const nome = document.getElementById('nova-regra-nome').value;
+            const tipo = document.getElementById('nova-regra-tipo').value;
+            const valor = document.getElementById('nova-regra-valor').value;
+            
+            if(!nome || !valor) {
+                alert("Preencha o nome e o valor da regra!");
+                return;
+            }
+            
+            let rules = JSON.parse(localStorage.getItem('brp_rules'));
+            
+            if(regraEditandoId !== null) {
+                const index = rules.findIndex(r => r.id === regraEditandoId);
+                if(index !== -1) {
+                    rules[index].nome = nome;
+                    rules[index].tipo = tipo;
+                    rules[index].valor = valor;
+                }
+                regraEditandoId = null;
+                const btnAdd = document.getElementById('btn-add-regra');
+                btnAdd.innerText = "Adicionar Regra";
+                btnAdd.style.backgroundColor = "#009c3b";
+                btnAdd.style.color = "#fff";
+            } else {
+                rules.push({ id: Date.now(), nome, tipo, valor });
+            }
+            
+            localStorage.setItem('brp_rules', JSON.stringify(rules));
+            carregarRegras();
+            
+            document.getElementById('nova-regra-nome').value = '';
+            document.getElementById('nova-regra-valor').value = '';
+        }
+
+        function removerRegra(id) {
+            if(confirm("Tem certeza que deseja excluir esta regra?")) {
+                let rules = JSON.parse(localStorage.getItem('brp_rules'));
+                rules = rules.filter(r => r.id !== id);
+                localStorage.setItem('brp_rules', JSON.stringify(rules));
+                carregarRegras();
+            }
+        }
+
+        // --- GERENCIAMENTO DE USUÁRIOS ---
+        function carregarUsuarios() {
+            const users = JSON.parse(localStorage.getItem('brp_users'));
+            const ul = document.getElementById('lista-usuarios');
+            ul.innerHTML = '';
+            users.forEach(u => {
+                ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
+                <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
+            });
+        }
+
+        function adicionarUsuario() {
+            const login = document.getElementById('novo-login').value;
+            const senha = document.getElementById('nova-senha').value;
+            if(!login || !senha) return;
+            
+            const users = JSON.parse(localStorage.getItem('brp_users'));
+            users.push({ login, senha });
+            localStorage.setItem('brp_users', JSON.stringify(users));
+            carregarUsuarios();
+            
+            document.getElementById('novo-login').value = '';
+            document.getElementById('nova-senha').value = '';
+        }
+
+        function removerUsuario(login) {
+            if(login === 'Thiago') { alert('Você não pode apagar o administrador principal!'); return; }
+            let users = JSON.parse(localStorage.getItem('brp_users'));
+            users = users.filter(u => u.login !== login);
+            localStorage.setItem('brp_users', JSON.stringify(users));
+            carregarUsuarios();
+        }
+    </script>
+</body>
+</html>
