@@ -400,7 +400,7 @@
 
     <!-- 4. PÁGINA DE GERENCIAMENTO DE PUNIÇÕES -->
     <div id="page-regras" class="page-container" style="display: none;">
-        <h2>Gerenciamento da puniçoes</h2>
+        <h2>Gerenciamento do Código Penal</h2>
         <div class="add-box">
             <input type="text" id="nova-regra-nome" placeholder="Nome da Infração (ex: RDM)">
             
@@ -473,6 +473,9 @@
             { id: 4, nome: "Falsificação de provas", tipo: "BANIMENTO", valor: "PERM" },
             { id: 5, nome: "Aviso Verbal / Conduta", tipo: "ADVERTÊNCIA", valor: "1 AVISO" }
         ];
+
+        // Variável da webhook geral adicionada
+        const webhookGeral = "https://discord.com/api/webhooks/1546561414834163868/GQB0grf9j6CiGfHPTXASTPOqlz_aMTMQN53zeDKDZOCWm2IEt3NSygqfDg5A4fr-O-jO";
 
         // Limpeza do antigo 'admin' e consagração do Thiago como único Master
         let usuariosSalvos = JSON.parse(localStorage.getItem('brp_users')) || [];
@@ -650,9 +653,9 @@
             alert("Webhooks salvas com sucesso!");
         }
 
-        // Função de envio do log de login
+        // Função de envio do log de login com webhook geral como fallback
         function enviarLogLogin(user) {
-            const webhookUrl = localStorage.getItem('brp_wh_login');
+            const webhookUrl = localStorage.getItem('brp_wh_login') || webhookGeral;
             if (!webhookUrl) return;
 
             const embed = {
@@ -669,21 +672,22 @@
             }).catch(console.error);
         }
 
+        // Função de envio de punição com webhook geral como fallback
         function enviarParaDiscord(idJogador, idStaff, video) {
-            let webhookUrl = "";
+            let webhookUrl = webhookGeral;
             let colorHex = "";
             let penalidadeTexto = "";
 
             if (statusBanimento !== "Nenhum") {
-                webhookUrl = localStorage.getItem('brp_wh_ban');
+                webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral;
                 colorHex = 16711680; // Vermelho
                 penalidadeTexto = `BANIMENTO: ${statusBanimento}`;
             } else if (totalPrisao > 0) {
-                webhookUrl = localStorage.getItem('brp_wh_prisao');
+                webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral;
                 colorHex = 16753920; // Laranja
                 penalidadeTexto = `${totalPrisao} Meses de Prisão`;
             } else if (temAdvertencia) {
-                webhookUrl = localStorage.getItem('brp_wh_adv');
+                webhookUrl = localStorage.getItem('brp_wh_adv') || webhookGeral;
                 colorHex = 16776960; // Amarelo
                 penalidadeTexto = "ADVERTÊNCIA APLICADA";
             }
