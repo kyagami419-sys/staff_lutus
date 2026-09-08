@@ -493,24 +493,30 @@
 
         // --- NAVEGAÇÃO E AUTENTICAÇÃO COM O BANCO DE DADOS SUPABASE ---
         async function realizarLogin() {
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
 
             if (!user || !pass) {
                 alert("Preencha o login e a senha!");
                 return;
             }
 
-            // Verifica no banco de dados se o usuário e a senha batem
+            // Busca no banco de dados de forma segura sem quebrar o app
             const { data, error } = await supabaseClient
                 .from('usuarios')
                 .select('*')
                 .eq('login', user)
-                .eq('senha', pass)
-                .single();
+                .eq('senha', pass);
 
-            if (data) {
-                usuarioLogado = data.login;
+            if (error) {
+                console.error("Erro no Supabase:", error);
+                alert("Erro ao conectar com o banco de dados.");
+                return;
+            }
+
+            if (data && data.length > 0) {
+                const usuarioEncontrado = data[0];
+                usuarioLogado = usuarioEncontrado.login;
                 
                 document.getElementById('page-login').style.display = 'none';
                 document.getElementById('navbar').style.display = 'flex';
