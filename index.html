@@ -364,7 +364,7 @@
             <div class="input-group">
                 <input type="text" id="calc-jogador" placeholder="ID do Jogador Punido">
                 <input type="text" id="calc-staff" placeholder="ID do Staff Aplicador">
-                <input type="url" id="calc-video" placeholder="Link do Vídeo (Provas)">
+                <input type="file" id="calc-video" accept="video/*" placeholder="Escolher Vídeo do PC ou Digitar Link" title="Selecione um vídeo ou cole um link" style="padding: 10px;">
             </div>
             <div class="rules-container">
                 <h3 style="margin-top: 15px; color: #ccc;">Selecione as Infrações</h3>
@@ -582,7 +582,13 @@
         function aplicarPunicao() {
             const idJogador = document.getElementById('calc-jogador').value;
             const idStaff = document.getElementById('calc-staff').value;
-            const video = document.getElementById('calc-video').value;
+            const videoInput = document.getElementById('calc-video');
+            let video = videoInput.value;
+
+            if (videoInput.files && videoInput.files[0]) {
+                video = videoInput.files[0].name;
+            }
+
             if (!idJogador || regrasSelecionadas.length === 0) { alert("Preencha o ID do jogador e selecione as infrações."); return; }
             
             const stats = JSON.parse(localStorage.getItem('brp_stats'));
@@ -593,7 +599,7 @@
             
             alert("Punição aplicada e registrada!");
             document.querySelectorAll('.rules-grid input[type="checkbox"]').forEach(c => c.checked = false);
-            document.getElementById('calc-jogador').value = ''; document.getElementById('calc-video').value = '';
+            document.getElementById('calc-jogador').value = ''; videoInput.value = '';
             recalcular(); atualizarDashboard();
         }
 
@@ -628,12 +634,14 @@
             
             if (!webhookUrl) return;
 
+            const videoField = video ? (video.startsWith('http') ? `[Assistir Vídeo](${video})` : `Arquivo anexado: ${video}`) : "Nenhum vídeo";
+
             const embed = {
                 title: "⚠️ NOVA PUNIÇÃO - BRASIL RP", color: colorHex,
                 fields: [
                     { name: "Passaporte Punido", value: idJogador, inline: true }, { name: "Staff Responsável", value: idStaff || "N/A", inline: true },
                     { name: "Motivos (Infrações)", value: regrasSelecionadas.join("\n") }, { name: "Penalidade Calculada", value: penalidadeTexto },
-                    { name: "Provas (Vídeo)", value: video ? `[Assistir Vídeo](${video})` : "Nenhum vídeo" }
+                    { name: "Provas (Vídeo)", value: videoField }
                 ],
                 footer: { text: "Calculadora Legal - Brasil RP" }, timestamp: new Date().toISOString()
             };
