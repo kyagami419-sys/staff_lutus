@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Punições - Brasil RP</title>
-    <!-- SDK do Supabase -->
+    <!-- SDK do Supabase carregado uma única vez -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ================= ESTILOS (CSS - CLEAN E BRASIL) ================= */
@@ -437,7 +437,7 @@
         // --- CONFIGURAÇÃO DO SUPABASE ---
         const SUPABASE_URL = 'https://jclrhmfrmcobzxgssutn.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_rIiMPYaGknA4llpYL-aXnQ_dC2RKekO';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Usuários padrão caso o banco esteja vazio
         const usuariosPadrao = [
@@ -471,12 +471,10 @@
             }
 
             try {
-                // Busca no Supabase pela tabela 'usuarios'
-                let { data: users, error } = await supabase
+                let { data: users, error } = await supabaseClient
                     .from('usuarios')
                     .select('*');
 
-                // Se a tabela não existir ou estiver vazia, usa o padrão Thiago
                 if (error || !users || users.length === 0) {
                     users = usuariosPadrao;
                 }
@@ -700,7 +698,7 @@
             const ul = document.getElementById('lista-usuarios');
             ul.innerHTML = '<li style="color:#888;">Carregando usuários da nuvem...</li>';
             
-            let { data: users, error } = await supabase.from('usuarios').select('*');
+            let { data: users, error } = await supabaseClient.from('usuarios').select('*');
             
             if (error || !users) {
                 users = usuariosPadrao;
@@ -725,8 +723,7 @@
                 return;
             }
 
-            // Insere diretamente na tabela 'usuarios' do Supabase
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('usuarios')
                 .insert([{ login, senha }]);
 
@@ -746,7 +743,7 @@
             if(login.toLowerCase() === 'thiago') { alert('Você não pode apagar o administrador principal!'); return; }
             
             if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('usuarios')
                     .delete()
                     .eq('login', login);
