@@ -364,7 +364,11 @@
             <div class="input-group">
                 <input type="text" id="calc-jogador" placeholder="ID do Jogador Punido">
                 <input type="text" id="calc-staff" placeholder="ID do Staff Aplicador">
-                <input type="file" id="calc-video" accept="video/*" placeholder="Escolher Vídeo do PC ou Digitar Link" title="Selecione um vídeo ou cole um link" style="padding: 10px;">
+                <input type="url" id="calc-video" placeholder="Link do Vídeo (Provas)">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.9rem; color: #aaa; display: block; margin-bottom: 5px;">Ou escolha um vídeo do computador (Máx. 8MB):</label>
+                <input type="file" id="calc-video-file" accept="video/*" onchange="verificarTamanhoVideo(this)" style="padding: 10px; background-color: #222; border: 1px solid #333; color: #ddd; border-radius: 6px;">
             </div>
             <div class="rules-container">
                 <h3 style="margin-top: 15px; color: #ccc;">Selecione as Infrações</h3>
@@ -579,14 +583,28 @@
             document.getElementById('res-adv').innerText = temAdvertencia ? "Aplicada" : "Nenhuma";
         }
 
+        function verificarTamanhoVideo(input) {
+            if (input.files && input.files[0]) {
+                const fileSize = input.files[0].size / 1024 / 1024; // em MB
+                if (fileSize > 8) {
+                    alert("O vídeo selecionado tem mais de 8MB. Por favor, envie o link do vídeo (como Medal, YouTube ou Streamable), pois o Discord não aceita arquivos maiores que 8MB pelo webhook.");
+                    input.value = "";
+                }
+            }
+        }
+
         function aplicarPunicao() {
             const idJogador = document.getElementById('calc-jogador').value;
             const idStaff = document.getElementById('calc-staff').value;
-            const videoInput = document.getElementById('calc-video');
-            let video = videoInput.value;
+            const videoLink = document.getElementById('calc-video').value.trim();
+            const videoFileInput = document.getElementById('calc-video-file');
+            
+            let provaFinal = "Nenhum vídeo";
 
-            if (videoInput.files && videoInput.files[0]) {
-                video = videoInput.files[0].name;
+            if (videoLink) {
+                provaFinal = videoLink.startsWith('http') ? `[Assistir Vídeo](${videoLink})` : videoLink;
+            } else if (videoFileInput.files && videoFileInput.files[0]) {
+                provaFinal = `Arquivo anexado: ${videoFileInput.files[0].name}`;
             }
 
             if (!idJogador || regrasSelecionadas.length === 0) { alert("Preencha o ID do jogador e selecione as infrações."); return; }
@@ -595,11 +613,13 @@
             stats.total += 1; if (statusBanimento !== "Nenhum") stats.bans += 1; if (temAdvertencia) stats.adv += 1;
             localStorage.setItem('brp_stats', JSON.stringify(stats));
             
-            enviarParaDiscord(idJogador, idStaff, video);
+            enviarParaDiscord(idJogador, idStaff, provaFinal);
             
             alert("Punição aplicada e registrada!");
             document.querySelectorAll('.rules-grid input[type="checkbox"]').forEach(c => c.checked = false);
-            document.getElementById('calc-jogador').value = ''; videoInput.value = '';
+            document.getElementById('calc-jogador').value = ''; 
+            document.getElementById('calc-video').value = '';
+            videoFileInput.value = '';
             recalcular(); atualizarDashboard();
         }
 
@@ -626,7 +646,7 @@
             fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
-        function enviarParaDiscord(idJogador, idStaff, video) {
+        function enviarParaDiscord(idJogador, idStaff, provaFinal) {
             let webhookUrl = webhookGeral; let colorHex = ""; let penalidadeTexto = "";
             if (statusBanimento !== "Nenhum") { webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral; colorHex = 16711680; penalidadeTexto = `BANIMENTO: ${statusBanimento}`; }
             else if (totalPrisao > 0) { webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral; colorHex = 16753920; penalidadeTexto = `${totalPrisao} Meses de Prisão`; }
@@ -634,14 +654,12 @@
             
             if (!webhookUrl) return;
 
-            const videoField = video ? (video.startsWith('http') ? `[Assistir Vídeo](${video})` : `Arquivo anexado: ${video}`) : "Nenhum vídeo";
-
             const embed = {
                 title: "⚠️ NOVA PUNIÇÃO - BRASIL RP", color: colorHex,
                 fields: [
                     { name: "Passaporte Punido", value: idJogador, inline: true }, { name: "Staff Responsável", value: idStaff || "N/A", inline: true },
                     { name: "Motivos (Infrações)", value: regrasSelecionadas.join("\n") }, { name: "Penalidade Calculada", value: penalidadeTexto },
-                    { name: "Provas (Vídeo)", value: videoField }
+                    { name: "Provas (Vídeo)", value: provaFinal }
                 ],
                 footer: { text: "Calculadora Legal - Brasil RP" }, timestamp: new Date().toISOString()
             };
