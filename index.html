@@ -623,34 +623,78 @@
             recalcular(); atualizarDashboard();
         }
 
-        // --- WEBHOOKS E DISCORD ---
-        function carregarWebhooks() {
-            document.getElementById('webhook-login').value = localStorage.getItem('brp_wh_login') || '';
-            document.getElementById('webhook-prisao').value = localStorage.getItem('brp_wh_prisao') || '';
-            document.getElementById('webhook-ban').value = localStorage.getItem('brp_wh_ban') || '';
-            document.getElementById('webhook-adv').value = localStorage.getItem('brp_wh_adv') || '';
+        // --- WEBHOOKS E DISCORD NA NUVEM (SUPABASE) ---
+        async function carregarWebhooks() {
+            let { data: configs } = await supabaseClient.from('configuracoes').select('*');
+            if (configs) {
+                configs.forEach(c => {
+                    if (c.chave === 'login') document.getElementById('webhook-login').value = c.valor || '';
+                    if (c.chave === 'prisao') document.getElementById('webhook-prisao').value = c.valor || '';
+                    if (c.chave === 'ban') document.getElementById('webhook-ban').value = c.valor || '';
+                    if (c.chave === 'adv') document.getElementById('webhook-adv').value = c.valor || '';
+                });
+            }
         }
 
-        function salvarWebhooks() {
-            localStorage.setItem('brp_wh_login', document.getElementById('webhook-login').value);
-            localStorage.setItem('brp_wh_prisao', document.getElementById('webhook-prisao').value);
-            localStorage.setItem('brp_wh_ban', document.getElementById('webhook-ban').value);
-            localStorage.setItem('brp_wh_adv', document.getElementById('webhook-adv').value);
-            alert("Configurações salvas com sucesso!");
+        async function salvarWebhooks() {
+            const whLogin = document.getElementById('webhook-login').value.trim();
+            const whPrisao = document.getElementById('webhook-prisao').value.trim();
+            const whBan = document.getElementById('webhook-ban').value.trim();
+            const whAdv = document.getElementById('webhook-adv').value.trim();
+
+            const chaves = [
+                { chave: 'login', valor: whLogin },
+                { chave: 'prisao', valor: whPrisao },
+                { chave: 'ban', valor: whBan },
+                { chave: 'adv', valor: whAdv }
+            ];
+
+            for (let item of chaves) {
+                // Tenta atualizar se já existe, senão insere
+                let { data } = await supabaseClient.from('configuracoes').select('*').eq('chave', item.chave);
+                if (data && data.length > 0) {
+                    await supabaseClient.from('configuracoes').update({ valor: item.valor }).eq('chave', item.chave);
+                } else {
+                    await supabaseClient.from('configuracoes').insert([item]);
+                }
+            }
+
+            alert("Configurações de Webhook salvas na nuvem com sucesso para todos!");
         }
 
-        function enviarLogLogin(user) {
-            const webhookUrl = localStorage.getItem('brp_wh_login') || webhookGeral;
+        async function obterWebhook(tipo) {
+            let { data } = await supabaseClient.from('configuracoes').select('*').eq('chave', tipo);
+            if (data && data.length > 0 && data[0].valor) {
+                return data[0].valor;
+            }
+            return webhookGeral;
+        }
+
+        async function enviarLogLogin(user) {
+            const webhookUrl = await obterWebhook('login');
             if (!webhookUrl) return;
             const embed = { title: "🔐 NOVO ACESSO - SISTEMA LEGAL", color: 39270, description: `O Staff **${user}** entrou no painel.`, timestamp: new Date().toISOString() };
             fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
-        function enviarParaDiscord(idJogador, idStaff, provaFinal) {
+        async function enviarParaDiscord(idJogador, idStaff, provaFinal) {
             let webhookUrl = webhookGeral; let colorHex = ""; let penalidadeTexto = "";
-            if (statusBanimento !== "Nenhum") { webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral; colorHex = 16711680; penalidadeTexto = `BANIMENTO: ${statusBanimento}`; }
-            else if (totalPrisao > 0) { webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral; colorHex = 16753920; penalidadeTexto = `${totalPrisao} Meses de Prisão`; }
-            else if (temAdvertencia) { webhookUrl = localStorage.getItem('brp_wh_adv') || webhookGeral; colorHex = 16776960; penalidadeTexto = "ADVERTÊNCIA APLICADA"; }
+            
+            if (statusBanimento !== "Nenhum") { 
+                webhookUrl = await obterWebhook('ban'); 
+                colorHex = 16711680; 
+                penalidadeTexto = `BANIMENTO: ${statusBanimento}`; 
+            }
+            else if (totalPrisao > 0) { 
+                webhookUrl = await obterWebhook('prisao'); 
+                colorHex = 16753920; 
+                penalidadeTexto = `${totalPrisao} Meses de Prisão`; 
+            }
+            else if (temAdvertencia) { 
+                webhookUrl = await obterWebhook('adv'); 
+                colorHex = 16776960; 
+                penalidadeTexto = "ADVERTÊNCIA APLICADA"; 
+            }
             
             if (!webhookUrl) return;
 
