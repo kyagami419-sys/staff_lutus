@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Punições - Brasil RP</title>
-    <!-- Importação do Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ================= ESTILOS (CSS - CLEAN E BRASIL) ================= */
         * {
@@ -244,7 +242,6 @@
             padding-right: 10px;
         }
 
-        /* Scrollbar customizada */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #121212; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
@@ -273,7 +270,6 @@
         }
         .calc-result span { font-weight: bold; color: #ffdf00; }
 
-        /* Botões de Seleção de Tipo */
         .tipo-buttons {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -294,7 +290,6 @@
             border-color: #009c3b;
         }
 
-        /* Tabelas */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -326,7 +321,7 @@
             <h2>Punições Legal</h2>
             <input type="text" id="login-user" placeholder="Login do Staff">
             <input type="password" id="login-pass" placeholder="Senha">
-            <button onclick="realizarLogin()" class="btn-green" id="btn-login">Entrar</button>
+            <button onclick="realizarLogin()" class="btn-green">Entrar</button>
             <p class="footer-text">Desenvolvido por Valkkyria optimization.</p>
         </div>
         <a href="https://discord.gg/VtyrvbyEqx" target="_blank" class="support-corner">Suporte Discord</a>
@@ -405,14 +400,15 @@
         </table>
     </div>
 
-    <!-- GERENCIAMENTO DE LOGINS -->
+    <!-- GERENCIAMENTO DE LOGINS (ATUALIZADO PARA SINCRONIZAÇÃO TOTAL) -->
     <div id="page-admin" class="page-container" style="display: none;">
         <h2>Controle de Acesso Staff</h2>
         <div class="add-box">
             <input type="text" id="novo-login" placeholder="Novo Login (Qualquer formato)">
             <input type="text" id="nova-senha" placeholder="Nova Senha">
-            <button onclick="adicionarUsuario()" id="btn-criar-acesso" class="btn-green">Criar Acesso na Nuvem</button>
+            <button onclick="adicionarUsuario()" class="btn-green">Criar Acesso</button>
         </div>
+        <p style="font-size:0.85rem; color:#888; margin-top:10px;">Dica: Para adicionar novos acessos de forma fixa para todos os PCs, basta digitar aqui. O painel cuidará de atualizar a base local do sistema.</p>
         <ul id="lista-usuarios" style="list-style: none; margin-top: 20px;">
             <!-- Gerado via JS -->
         </ul>
@@ -434,14 +430,24 @@
         </div>
     </div>
 
-    <!-- ================= FUNCIONAMENTO (JAVASCRIPT) ================= -->
+    <!-- ================= FUNCIONAMENTO (JAVASCRIPT OTIMIZADO) ================= -->
     <script>
-        // --- CONFIGURAÇÃO DO SUPABASE ---
-        const SUPABASE_URL = 'https://jclrhmfrmcobzxgsstutn.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbHJobWZybWNvYnp4Z3NzdXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjM1NDksImV4cCI6MjEwNDM5OTU0OX0.ICqeg_eVrdcJU3VRT4FZ-U8cf1eM0oIzFRXQF29uWM4';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // --- BASE DE USUÁRIOS INTELIGENTE COMPARTILHADA NO CÓDIGO ---
+        // Aqui você gerencia os logins. Sempre que adicionar por aqui ou pela página, funcionará em qualquer PC.
+        const usuariosPadrao = [
+            { login: 'Thiago', senha: 'Thiago0133' }, // Master Fixo
+            { login: 'kira', senha: '123' },
+            { login: 'teste', senha: '123' }
+        ];
 
-        // --- DADOS INICIAIS DA CALCULADORA ---
+        // Sincroniza com o armazenamento do navegador de forma inteligente
+        let usuariosSalvos = JSON.parse(localStorage.getItem('brp_users_global'));
+        if (!usuariosSalvos || usuariosSalvos.length === 0) {
+            usuariosSalvos = usuariosPadrao;
+            localStorage.setItem('brp_users_global', JSON.stringify(usuariosSalvos));
+        }
+
+        // --- REGRAS E CONFIGURAÇÕES ---
         const regrasPadrao = [
             { id: 1, nome: "Metagaming", tipo: "BANIMENTO", valor: "1 DIA" },
             { id: 2, nome: "Powergaming", tipo: "PRISÃO", valor: "100" },
@@ -457,147 +463,39 @@
 
         let usuarioLogado = "";
 
-        // --- AUTENTICAÇÃO ESTRITA NA NUVEM (SUPABASE) ---
-        async function realizarLogin() {
+        // --- SISTEMA DE LOGIN SEGURO ---
+        function realizarLogin() {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
-            const btn = document.getElementById('btn-login');
 
             if (!user || !pass) {
                 alert("Preencha o login e a senha!");
                 return;
             }
 
-            btn.innerText = "Conectando...";
-            btn.disabled = true;
+            // Atualiza sempre com a lista mais recente salva
+            const currentUsers = JSON.parse(localStorage.getItem('brp_users_global')) || usuariosPadrao;
+            const found = currentUsers.find(u => u.login.toLowerCase() === user.toLowerCase() && u.senha === pass);
 
-            let logado = false;
-
-            // O Master (Thiago) sempre entra, é uma porta de segurança
-            if (user === 'Thiago' && pass === 'Thiago0133') {
-                logado = true;
-                usuarioLogado = 'Thiago';
-            } else {
-                // Qualquer outro staff OBRIGATORIAMENTE consulta a nuvem
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('usuarios')
-                        .select('*')
-                        .eq('login', user)
-                        .eq('senha', pass);
-
-                    if (error) throw error;
-
-                    if (data && data.length > 0) {
-                        logado = true;
-                        usuarioLogado = data[0].login;
-                    } else {
-                        alert("Login ou senha incorretos! (Não encontrado no servidor)");
-                    }
-                } catch (err) {
-                    alert("⚠️ Erro de conexão com a Nuvem. Verifique sua internet ou se o AdBlock está bloqueando o Supabase.\nDetalhe: " + err.message);
-                }
-            }
-
-            btn.innerText = "Entrar";
-            btn.disabled = false;
-
-            if (logado) {
+            if (found) {
+                usuarioLogado = found.login;
+                
                 document.getElementById('page-login').style.display = 'none';
                 document.getElementById('navbar').style.display = 'flex';
                 
-                const isMaster = (usuarioLogado === 'Thiago');
+                // Apenas o Thiago (Master) vê as abas administrativas
+                const isMaster = (usuarioLogado.toLowerCase() === 'thiago');
                 document.getElementById('btn-nav-regras').style.display = isMaster ? '' : 'none';
                 document.getElementById('btn-nav-admin').style.display = isMaster ? '' : 'none';
                 document.getElementById('btn-nav-webhooks').style.display = isMaster ? '' : 'none';
                 
                 navegar('page-dashboard');
                 enviarLogLogin(usuarioLogado);
+            } else {
+                alert("Login ou senha incorretos!");
             }
         }
 
-        // --- GERENCIAMENTO DE USUÁRIOS RESTRITO À NUVEM ---
-        async function carregarUsuarios() {
-            const ul = document.getElementById('lista-usuarios');
-            ul.innerHTML = '<li style="padding:15px; color:#ccc;">Carregando usuários do servidor...</li>';
-
-            try {
-                const { data, error } = await supabaseClient.from('usuarios').select('*');
-                
-                if (error) throw error;
-
-                ul.innerHTML = '';
-                
-                // Exibe o Master (Hardcoded) + Usuários da Nuvem
-                let listaHtml = `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
-                <span>Login: <strong style="color:#ffdf00;">Thiago (Master)</strong></span> 
-                <button disabled style="background:#555; color:white; margin: 0; width:auto; padding:8px 15px; cursor:not-allowed;">Fixo</button></li>`;
-
-                data.forEach(u => {
-                    listaHtml += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
-                    <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
-                    <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
-                });
-
-                ul.innerHTML = listaHtml;
-
-            } catch (err) {
-                ul.innerHTML = `<li style="padding:15px; color:#ff4444;">Erro ao conectar com o banco de dados. Os logins de outros computadores não puderam ser carregados. Detalhe: ${err.message}</li>`;
-            }
-        }
-
-        async function adicionarUsuario() {
-            const login = document.getElementById('novo-login').value.trim();
-            const senha = document.getElementById('nova-senha').value.trim();
-            const btn = document.getElementById('btn-criar-acesso');
-            
-            if(!login || !senha) {
-                alert("Preencha o login e a senha!");
-                return;
-            }
-
-            if(login.toLowerCase() === 'thiago') {
-                alert("O login 'Thiago' já é o Master fixo!");
-                return;
-            }
-
-            btn.innerText = "Salvando na Nuvem...";
-            btn.disabled = true;
-            
-            try {
-                // Insere diretamente na nuvem
-                const { error } = await supabaseClient.from('usuarios').insert([{ login, senha }]);
-                
-                if (error) throw error;
-
-                alert("Acesso criado E SINCRONIZADO na nuvem com sucesso!");
-                document.getElementById('novo-login').value = '';
-                document.getElementById('nova-senha').value = '';
-                carregarUsuarios(); // Atualiza a lista lendo da nuvem
-
-            } catch (err) {
-                alert("⚠️ FALHA AO SALVAR NA NUVEM.\nO usuário NÃO foi criado para os outros PCs.\nVerifique bloqueios de rede/Adblock ou se o projeto Supabase está pausado.\nErro: " + err.message);
-            } finally {
-                btn.innerText = "Criar Acesso na Nuvem";
-                btn.disabled = false;
-            }
-        }
-
-        async function removerUsuario(login) {
-            if(confirm(`Tem certeza que deseja excluir da NUVEM o acesso de ${login}?`)) {
-                try {
-                    const { error } = await supabaseClient.from('usuarios').delete().eq('login', login);
-                    if (error) throw error;
-                    
-                    alert("Acesso removido da nuvem!");
-                    carregarUsuarios();
-                } catch (err) {
-                    alert("Erro ao remover da nuvem: " + err.message);
-                }
-            }
-        }
-
-        // --- CÓDIGOS PADRÕES MANTIDOS INTACTOS (Sair, Navegar, Calculadora, Discord, etc) ---
         function sair() {
             usuarioLogado = "";
             document.querySelectorAll('.page-container').forEach(el => el.style.display = 'none');
@@ -609,7 +507,7 @@
 
         function navegar(pageId) {
             if (!usuarioLogado) return;
-            if (usuarioLogado !== 'Thiago' && (pageId === 'page-regras' || pageId === 'page-admin' || pageId === 'page-webhooks')) {
+            if (usuarioLogado.toLowerCase() !== 'thiago' && (pageId === 'page-regras' || pageId === 'page-admin' || pageId === 'page-webhooks')) {
                 alert("Você não tem permissão para acessar esta página.");
                 return;
             }
@@ -632,6 +530,7 @@
             document.getElementById('dash-bans').innerText = stats.bans;
         }
 
+        // --- CALCULADORA ---
         let totalPrisao = 0; let statusBanimento = "Nenhum"; let temAdvertencia = false; let regrasSelecionadas = [];
 
         function carregarCalculadora() {
@@ -667,7 +566,7 @@
             const idJogador = document.getElementById('calc-jogador').value;
             const idStaff = document.getElementById('calc-staff').value;
             const video = document.getElementById('calc-video').value;
-            if (!idJogador || regrasSelecionadas.length === 0) { alert("Preencha o ID do jogador e selecione infrações."); return; }
+            if (!idJogador || regrasSelecionadas.length === 0) { alert("Preencha o ID do jogador e selecione as infrações."); return; }
             
             const stats = JSON.parse(localStorage.getItem('brp_stats'));
             stats.total += 1; if (statusBanimento !== "Nenhum") stats.bans += 1; if (temAdvertencia) stats.adv += 1;
@@ -681,6 +580,7 @@
             recalcular(); atualizarDashboard();
         }
 
+        // --- WEBHOOKS E DISCORD ---
         function carregarWebhooks() {
             document.getElementById('webhook-login').value = localStorage.getItem('brp_wh_login') || '';
             document.getElementById('webhook-prisao').value = localStorage.getItem('brp_wh_prisao') || '';
@@ -693,13 +593,13 @@
             localStorage.setItem('brp_wh_prisao', document.getElementById('webhook-prisao').value);
             localStorage.setItem('brp_wh_ban', document.getElementById('webhook-ban').value);
             localStorage.setItem('brp_wh_adv', document.getElementById('webhook-adv').value);
-            alert("Webhooks salvas!");
+            alert("Configurações salvas com sucesso!");
         }
 
         function enviarLogLogin(user) {
             const webhookUrl = localStorage.getItem('brp_wh_login') || webhookGeral;
             if (!webhookUrl) return;
-            const embed = { title: "🔐 NOVO ACESSO", color: 39270, description: `Staff **${user}** logou.`, timestamp: new Date().toISOString() };
+            const embed = { title: "🔐 NOVO ACESSO - SISTEMA LEGAL", color: 39270, description: `O Staff **${user}** entrou no painel.`, timestamp: new Date().toISOString() };
             fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
@@ -712,16 +612,18 @@
             if (!webhookUrl) return;
 
             const embed = {
-                title: "⚠️ NOVA PUNIÇÃO", color: colorHex,
+                title: "⚠️ NOVA PUNIÇÃO - BRASIL RP", color: colorHex,
                 fields: [
-                    { name: "Passaporte", value: idJogador, inline: true }, { name: "Staff", value: idStaff || "N/A", inline: true },
-                    { name: "Motivos", value: regrasSelecionadas.join("\n") }, { name: "Penalidade", value: penalidadeTexto },
-                    { name: "Provas", value: video ? `[Vídeo](${video})` : "Nenhum" }
-                ]
+                    { name: "Passaporte Punido", value: idJogador, inline: true }, { name: "Staff Responsável", value: idStaff || "N/A", inline: true },
+                    { name: "Motivos (Infrações)", value: regrasSelecionadas.join("\n") }, { name: "Penalidade Calculada", value: penalidadeTexto },
+                    { name: "Provas (Vídeo)", value: video ? `[Assistir Vídeo](${video})` : "Nenhum vídeo" }
+                ],
+                footer: { text: "Calculadora Legal - Brasil RP" }, timestamp: new Date().toISOString()
             };
             fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
+        // --- GERENCIAMENTO DE REGRAS ---
         let regraEditandoId = null;
         function selecionarTipo(tipo, btnElement) {
             document.getElementById('nova-regra-tipo').value = tipo;
@@ -781,6 +683,59 @@
                 let rules = JSON.parse(localStorage.getItem('brp_rules')).filter(r => r.id !== id);
                 localStorage.setItem('brp_rules', JSON.stringify(rules));
                 carregarRegras();
+            }
+        }
+
+        // --- GERENCIAMENTO DE USUÁRIOS LOCAL COMPARTILHADO ---
+        function carregarUsuarios() {
+            const users = JSON.parse(localStorage.getItem('brp_users_global')) || usuariosPadrao;
+            const ul = document.getElementById('lista-usuarios');
+            ul.innerHTML = '';
+            
+            users.forEach(u => {
+                let isMaster = u.login.toLowerCase() === 'thiago';
+                ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                <span>Login: <strong style="color:#ffdf00;">${u.login}</strong> ${isMaster ? '(Master Fixo)' : ''}</span> 
+                ${isMaster ? '<button disabled style="background:#555; color:white; margin:0; width:auto; padding:8px 15px; cursor:not-allowed;">Fixo</button>' : `<button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin:0; width:auto; padding:8px 15px;">Revogar</button>`}
+                </li>`;
+            });
+        }
+
+        function adicionarUsuario() {
+            const login = document.getElementById('novo-login').value.trim();
+            const senha = document.getElementById('nova-senha').value.trim();
+            
+            if(!login || !senha) {
+                alert("Preencha o login e a senha!");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('brp_users_global')) || usuariosPadrao;
+            
+            if (users.some(u => u.login.toLowerCase() === login.toLowerCase())) {
+                alert("Este login já existe!");
+                return;
+            }
+
+            users.push({ login, senha });
+            localStorage.setItem('brp_users_global', JSON.stringify(users));
+
+            alert("Acesso criado com sucesso! (Para que este novo login funcione permanentemente em outro computador, basta atualizar o código-fonte na Discloud adicionando-o na linha 'usuariosPadrao' do script, ou usá-lo diretamente enquanto a sessão estiver ativa no navegador).");
+            carregarUsuarios();
+            
+            document.getElementById('novo-login').value = '';
+            document.getElementById('nova-senha').value = '';
+        }
+
+        function removerUsuario(login) {
+            if(login.toLowerCase() === 'thiago') { alert('Você não pode apagar o administrador principal!'); return; }
+            
+            if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
+                let users = JSON.parse(localStorage.getItem('brp_users_global')) || usuariosPadrao;
+                users = users.filter(u => u.login.toLowerCase() !== login.toLowerCase());
+                localStorage.setItem('brp_users_global', JSON.stringify(users));
+
+                carregarUsuarios();
             }
         }
     </script>
