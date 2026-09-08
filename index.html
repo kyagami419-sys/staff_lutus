@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Punições - Brasil RP</title>
+    <!-- Importação do Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ================= ESTILOS (CSS - CLEAN E BRASIL) ================= */
         * {
@@ -465,6 +467,17 @@
 
     <!-- ================= FUNCIONAMENTO (JAVASCRIPT) ================= -->
     <script>
+        // --- CONFIGURAÇÃO DO SUPABASE ---
+        const SUPABASE_URL = 'https://jclrhmfrmcobzxgsstutn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbHJobWZybWNvYnp4Z3NzdXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjM1NDksImV4cCI6MjEwNDM5OTU0OX0.ICqeg_eVrdcJU3VRT4FZ-U8cf1eM0oIzFRXQF29uWM4';
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn("Supabase init warning:", e);
+        }
+
         // --- DADOS INICIAIS ---
         const regrasPadrao = [
             { id: 1, nome: "Metagaming", tipo: "BANIMENTO", valor: "1 DIA" },
@@ -479,16 +492,10 @@
         if (!localStorage.getItem('brp_rules')) localStorage.setItem('brp_rules', JSON.stringify(regrasPadrao));
         if (!localStorage.getItem('brp_stats')) localStorage.setItem('brp_stats', JSON.stringify({ total: 0, adv: 0, servicos: 0, bans: 0 }));
 
-        let usuariosLocais = JSON.parse(localStorage.getItem('brp_users')) || [{ login: 'Thiago', senha: 'Thiago0133' }];
-        if (!usuariosLocais.find(u => u.login === 'Thiago')) {
-            usuariosLocais.push({ login: 'Thiago', senha: 'Thiago0133' });
-        }
-        localStorage.setItem('brp_users', JSON.stringify(usuariosLocais));
-
         let usuarioLogado = "";
 
-        // --- AUTENTICAÇÃO SEGURA LOCAL ---
-        function realizarLogin() {
+        // --- AUTENTICAÇÃO COM SUPABASE E FALLBACK ---
+        async function realizarLogin() {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
 
@@ -497,12 +504,40 @@
                 return;
             }
 
-            const usersLocal = JSON.parse(localStorage.getItem('brp_users')) || [];
-            const found = usersLocal.find(u => u.login === user && u.senha === pass);
+            let logado = false;
+            let nomeLogado = "";
 
-            if (found) {
-                usuarioLogado = found.login;
-                
+            if (user === 'Thiago' && pass === 'Thiago0133') {
+                logado = true;
+                nomeLogado = 'Thiago';
+            } else if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('usuarios')
+                        .select('*')
+                        .eq('login', user)
+                        .eq('senha', pass);
+
+                    if (!error && data && data.length > 0) {
+                        logado = true;
+                        nomeLogado = data[0].login;
+                    }
+                } catch (err) {
+                    console.warn("Erro ao buscar no Supabase:", err);
+                }
+            }
+
+            if (!logado) {
+                const usersLocal = JSON.parse(localStorage.getItem('brp_users')) || [];
+                const found = usersLocal.find(u => u.login === user && u.senha === pass);
+                if (found) {
+                    logado = true;
+                    nomeLogado = found.login;
+                }
+            }
+
+            if (logado) {
+                usuarioLogado = nomeLogado;
                 document.getElementById('page-login').style.display = 'none';
                 document.getElementById('navbar').style.display = 'flex';
                 
@@ -800,12 +835,32 @@
             }
         }
 
-        // --- GERENCIAMENTO DE USUÁRIOS LOCAL EFICIENTE ---
-        function carregarUsuarios() {
-            let users = JSON.parse(localStorage.getItem('brp_users')) || [{ login: 'Thiago', senha: 'Thiago0133' }];
+        // --- GERENCIAMENTO DE USUÁRIOS COM SUPABASE ---
+        async function carregarUsuarios() {
+            let users = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('usuarios').select('*');
+                    if (!error && data) {
+                        users = data;
+                    }
+                } catch (e) {
+                    console.warn("Erro ao buscar usuários do Supabase:", e);
+                }
+            }
+
+            if (users.length === 0) {
+                users = JSON.parse(localStorage.getItem('brp_users')) || [];
+            }
+
             const ul = document.getElementById('lista-usuarios');
             ul.innerHTML = '';
             
+            // Garante que o admin Thiago apareça na lista se não estiver vindo do banco
+            if (!users.some(u => u.login === 'Thiago')) {
+                users.unshift({ login: 'Thiago', senha: 'Thiago0133' });
+            }
+
             users.forEach(u => {
                 ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
                 <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
@@ -813,7 +868,7 @@
             });
         }
 
-        function adicionarUsuario() {
+        async function adicionarUsuario() {
             const login = document.getElementById('novo-login').value.trim();
             const senha = document.getElementById('nova-senha').value.trim();
             
@@ -822,12 +877,19 @@
                 return;
             }
             
-            let users = JSON.parse(localStorage.getItem('brp_users')) || [];
-            if (users.some(u => u.login.toLowerCase() === login.toLowerCase())) {
-                alert("Este login já existe!");
-                return;
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('usuarios').insert([{ login, senha }]);
+                    if (error) {
+                        alert("Erro ao registrar no Supabase: " + error.message);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Erro de conexão com Supabase:", err);
+                }
             }
 
+            let users = JSON.parse(localStorage.getItem('brp_users')) || [];
             users.push({ login, senha });
             localStorage.setItem('brp_users', JSON.stringify(users));
 
@@ -838,10 +900,18 @@
             document.getElementById('nova-senha').value = '';
         }
 
-        function removerUsuario(login) {
+        async function removerUsuario(login) {
             if(login === 'Thiago') { alert('Você não pode apagar o administrador principal!'); return; }
             
             if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
+                if (supabaseClient) {
+                    try {
+                        await supabaseClient.from('usuarios').delete().eq('login', login);
+                    } catch (err) {
+                        console.warn("Erro ao remover do Supabase:", err);
+                    }
+                }
+
                 let users = JSON.parse(localStorage.getItem('brp_users')) || [];
                 users = users.filter(u => u.login !== login);
                 localStorage.setItem('brp_users', JSON.stringify(users));
