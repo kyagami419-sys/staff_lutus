@@ -444,7 +444,7 @@
             { login: 'Thiago', senha: 'Thiago0133' }
         ];
 
-        // --- REGRAS E CONFIGURAÇÕES ---
+        // --- REGRAS PADRÃO CASO O BANCO ESTEJA VAZIO ---
         const regrasPadrao = [
             { id: 1, nome: "Metagaming", tipo: "BANIMENTO", valor: "1 DIA" },
             { id: 2, nome: "Powergaming", tipo: "PRISÃO", valor: "100" },
@@ -455,7 +455,6 @@
 
         const webhookGeral = "https://discord.com/api/webhooks/1546561414834163868/GQB0grf9j6CiGfHPTXASTPOqlz_aMTMQN53zeDKDZOCWm2IEt3NSygqfDg5A4fr-O-jO";
 
-        if (!localStorage.getItem('brp_rules')) localStorage.setItem('brp_rules', JSON.stringify(regrasPadrao));
         if (!localStorage.getItem('brp_stats')) localStorage.setItem('brp_stats', JSON.stringify({ total: 0, adv: 0, servicos: 0, bans: 0 }));
 
         let usuarioLogado = "";
@@ -537,12 +536,18 @@
             document.getElementById('dash-bans').innerText = stats.bans;
         }
 
-        // --- CALCULADORA ---
+        // --- CALCULADORA (COM REGRAS DO SUPABASE) ---
         let totalPrisao = 0; let statusBanimento = "Nenhum"; let temAdvertencia = false; let regrasSelecionadas = [];
 
-        function carregarCalculadora() {
-            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+        async function carregarCalculadora() {
             const list = document.getElementById('rules-list');
+            list.innerHTML = '<span style="color:#888;">Carregando infrações...</span>';
+
+            let { data: rules, error } = await supabaseClient.from('regras').select('*');
+            if (error || !rules || rules.length === 0) {
+                rules = regrasPadrao;
+            }
+
             list.innerHTML = '';
             rules.forEach(rule => {
                 const div = document.createElement('div');
@@ -553,16 +558,21 @@
             });
         }
 
-        function recalcular() {
-            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+        async function recalcular() {
+            let { data: rules, error } = await supabaseClient.from('regras').select('*');
+            if (error || !rules || rules.length === 0) rules = regrasPadrao;
+
             const checkboxes = document.querySelectorAll('.rules-grid input[type="checkbox"]:checked');
             totalPrisao = 0; statusBanimento = "Nenhum"; temAdvertencia = false; regrasSelecionadas = [];
+            
             checkboxes.forEach(box => {
                 const rule = rules.find(r => r.id == box.value);
-                regrasSelecionadas.push(rule.nome);
-                if (rule.tipo.includes("PRISÃO") || rule.tipo.includes("CAMISA DE FORÇA")) totalPrisao += parseInt(rule.valor) || 0;
-                else if (rule.tipo.includes("BANIMENTO")) statusBanimento = rule.valor;
-                else if (rule.tipo.includes("ADVERTÊNCIA") || rule.tipo.includes("ADVERTENCIA")) temAdvertencia = true;
+                if (rule) {
+                    regrasSelecionadas.push(rule.nome);
+                    if (rule.tipo.includes("PRISÃO") || rule.tipo.includes("CAMISA DE FORÇA")) totalPrisao += parseInt(rule.valor) || 0;
+                    else if (rule.tipo.includes("BANIMENTO")) statusBanimento = rule.valor;
+                    else if (rule.tipo.includes("ADVERTÊNCIA") || rule.tipo.includes("ADVERTENCIA")) temAdvertencia = true;
+                }
             });
             document.getElementById('res-prisao').innerText = totalPrisao;
             document.getElementById('res-ban').innerText = statusBanimento;
@@ -630,7 +640,7 @@
             fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
-        // --- GERENCIAMENTO DE REGRAS ---
+        // --- GERENCIAMENTO DE REGRAS (SUPABASE) ---
         let regraEditandoId = null;
         function selecionarTipo(tipo, btnElement) {
             document.getElementById('nova-regra-tipo').value = tipo;
@@ -638,9 +648,13 @@
             btnElement.classList.add('active');
         }
 
-        function carregarRegras() {
-            const rules = JSON.parse(localStorage.getItem('brp_rules'));
+        async function carregarRegras() {
             const tbody = document.getElementById('tbody-regras');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888;">Carregando regras da nuvem...</td></tr>';
+            
+            let { data: rules, error } = await supabaseClient.from('regras').select('*');
+            if (error || !rules) rules = regrasPadrao;
+
             tbody.innerHTML = '';
             rules.forEach(r => {
                 let badgeColor = r.tipo.includes('BAN') ? '#ff4444' : (r.tipo.includes('ADV') ? '#ffdf00' : '#009c3b');
@@ -648,13 +662,14 @@
                 tbody.innerHTML += `<tr><td style="font-weight: 500;">${r.nome}</td>
                     <td><span style="background:${badgeColor}; color:${textColor}; padding:4px 8px; border-radius:4px; font-weight:bold;">${r.tipo}</span></td>
                     <td>${r.valor}</td>
-                    <td class="action-btns"><button onclick="editarRegra(${r.id})" style="background:#ffdf00; color:#121212;">Editar</button>
-                    <button onclick="removerRegra(${r.id})" style="background:#ff4444; color:#fff;">Excluir</button></td></tr>`;
+                    <td class="action-btns"><button onclick="editarRegra('${r.id}')" style="background:#ffdf00; color:#121212;">Editar</button>
+                    <button onclick="removerRegra('${r.id}')" style="background:#ff4444; color:#fff;">Excluir</button></td></tr>`;
             });
         }
 
-        function editarRegra(id) {
-            const rule = JSON.parse(localStorage.getItem('brp_rules')).find(r => r.id === id);
+        async function editarRegra(id) {
+            let { data: rules } = await supabaseClient.from('regras').select('*');
+            const rule = rules.find(r => r.id == id);
             if(rule) {
                 document.getElementById('nova-regra-nome').value = rule.nome;
                 document.getElementById('nova-regra-valor').value = rule.valor;
@@ -667,28 +682,44 @@
             }
         }
 
-        function adicionarRegra() {
-            const nome = document.getElementById('nova-regra-nome').value;
+        async function adicionarRegra() {
+            const nome = document.getElementById('nova-regra-nome').value.trim();
             const tipo = document.getElementById('nova-regra-tipo').value;
-            const valor = document.getElementById('nova-regra-valor').value;
+            const valor = document.getElementById('nova-regra-valor').value.trim();
+            
             if(!nome || !valor) { alert("Preencha o nome e o valor da regra!"); return; }
-            let rules = JSON.parse(localStorage.getItem('brp_rules'));
+
             if(regraEditandoId !== null) {
-                const index = rules.findIndex(r => r.id === regraEditandoId);
-                if(index !== -1) { rules[index].nome = nome; rules[index].tipo = tipo; rules[index].valor = valor; }
+                const { error } = await supabaseClient
+                    .from('regras')
+                    .update({ nome, tipo, valor })
+                    .eq('id', regraEditandoId);
+
+                if (error) { alert("Erro ao atualizar regra."); return; }
                 regraEditandoId = null;
                 const btnAdd = document.getElementById('btn-add-regra');
                 btnAdd.innerText = "Adicionar Regra"; btnAdd.style.backgroundColor = "#009c3b"; btnAdd.style.color = "#fff";
-            } else rules.push({ id: Date.now(), nome, tipo, valor });
-            localStorage.setItem('brp_rules', JSON.stringify(rules));
+            } else {
+                const { error } = await supabaseClient
+                    .from('regras')
+                    .insert([{ nome, tipo, valor }]);
+
+                if (error) { alert("Erro ao adicionar regra na nuvem."); return; }
+            }
+
             carregarRegras();
-            document.getElementById('nova-regra-nome').value = ''; document.getElementById('nova-regra-valor').value = '';
+            document.getElementById('nova-regra-nome').value = ''; 
+            document.getElementById('nova-regra-valor').value = '';
         }
 
-        function removerRegra(id) {
+        async function removerRegra(id) {
             if(confirm("Deseja excluir esta regra?")) {
-                let rules = JSON.parse(localStorage.getItem('brp_rules')).filter(r => r.id !== id);
-                localStorage.setItem('brp_rules', JSON.stringify(rules));
+                const { error } = await supabaseClient
+                    .from('regras')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) { alert("Erro ao excluir regra."); return; }
                 carregarRegras();
             }
         }
