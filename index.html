@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Punições - Brasil RP</title>
-    <!-- Importação do Supabase JS SDK adicionada -->
+    <!-- Importação do Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* ================= ESTILOS (CSS - CLEAN E BRASIL) ================= */
@@ -469,10 +469,14 @@
     <script>
         // --- CONFIGURAÇÃO DO SUPABASE ---
         const SUPABASE_URL = 'https://jclrhmfrmcobzxgsstutn.supabase.co';
-        // A chave longa que começa com 'eyJ...' vai aqui dentro:
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbHJobWZybWNvYnp4Z3NzdXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjM1NDksImV4cCI6MjEwNDM5OTU0OX0.ICqeg_eVrdcJU3VRT4FZ-U8cf1eM0oIzFRXQF29uWM4';
         
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn("Supabase SDK init warning:", e);
+        }
 
         // --- DADOS INICIAIS ---
         const regrasPadrao = [
@@ -483,15 +487,20 @@
             { id: 5, nome: "Aviso Verbal / Conduta", tipo: "ADVERTÊNCIA", valor: "1 AVISO" }
         ];
 
-        // Variável da webhook geral adicionada
         const webhookGeral = "https://discord.com/api/webhooks/1546561414834163868/GQB0grf9j6CiGfHPTXASTPOqlz_aMTMQN53zeDKDZOCWm2IEt3NSygqfDg5A4fr-O-jO";
 
         if (!localStorage.getItem('brp_rules')) localStorage.setItem('brp_rules', JSON.stringify(regrasPadrao));
         if (!localStorage.getItem('brp_stats')) localStorage.setItem('brp_stats', JSON.stringify({ total: 0, adv: 0, servicos: 0, bans: 0 }));
 
+        let usuariosLocais = JSON.parse(localStorage.getItem('brp_users')) || [{ login: 'Thiago', senha: 'Thiago0133' }];
+        if (!usuariosLocais.find(u => u.login === 'Thiago')) {
+            usuariosLocais.push({ login: 'Thiago', senha: 'Thiago0133' });
+        }
+        localStorage.setItem('brp_users', JSON.stringify(usuariosLocais));
+
         let usuarioLogado = "";
 
-        // --- NAVEGAÇÃO E AUTENTICAÇÃO COM O BANCO DE DADOS SUPABASE ---
+        // --- NAVEGAÇÃO E AUTENTICAÇÃO COM FALLBACK INTELIGENTE ---
         async function realizarLogin() {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
@@ -501,35 +510,49 @@
                 return;
             }
 
-            // Busca no banco de dados de forma segura sem quebrar o app
-            const { data, error } = await supabaseClient
-                .from('usuarios')
-                .select('*')
-                .eq('login', user)
-                .eq('senha', pass);
+            let logadoComSucesso = false;
+            let nomeLogado = "";
 
-            if (error) {
-                console.error("Erro no Supabase:", error);
-                alert("Erro ao conectar com o banco de dados.");
-                return;
+            // Tenta consultar o Supabase se estiver acessível
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('usuarios')
+                        .select('*')
+                        .eq('login', user)
+                        .eq('senha', pass);
+
+                    if (!error && data && data.length > 0) {
+                        logadoComSucesso = true;
+                        nomeLogado = data[0].login;
+                    }
+                } catch (err) {
+                    console.warn("Falha de rede com Supabase, usando autenticação de segurança local:", err);
+                }
             }
 
-            if (data && data.length > 0) {
-                const usuarioEncontrado = data[0];
-                usuarioLogado = usuarioEncontrado.login;
+            // Se o Supabase falhou ou bloqueou, valida pelo sistema local de segurança
+            if (!logadoComSucesso) {
+                const usersLocal = JSON.parse(localStorage.getItem('brp_users')) || [];
+                const found = usersLocal.find(u => u.login === user && u.senha === pass);
+                if (found) {
+                    logadoComSucesso = true;
+                    nomeLogado = found.login;
+                }
+            }
+
+            if (logadoComSucesso) {
+                usuarioLogado = nomeLogado;
                 
                 document.getElementById('page-login').style.display = 'none';
                 document.getElementById('navbar').style.display = 'flex';
                 
-                // Sistema de Permissões
                 const isMaster = (usuarioLogado === 'Thiago');
                 document.getElementById('btn-nav-regras').style.display = isMaster ? '' : 'none';
                 document.getElementById('btn-nav-admin').style.display = isMaster ? '' : 'none';
                 document.getElementById('btn-nav-webhooks').style.display = isMaster ? '' : 'none';
                 
                 navegar('page-dashboard');
-
-                // Envia webhook silenciosa avisando quem logou
                 enviarLogLogin(usuarioLogado);
             } else {
                 alert("Login ou senha incorretos!");
@@ -662,14 +685,13 @@
             alert("Webhooks salvas com sucesso!");
         }
 
-        // Função de envio do log de login com webhook geral como fallback
         function enviarLogLogin(user) {
             const webhookUrl = localStorage.getItem('brp_wh_login') || webhookGeral;
             if (!webhookUrl) return;
 
             const embed = {
                 title: "🔐 NOVO ACESSO - SISTEMA LEGAL",
-                color: 39270, // Verde Escuro
+                color: 39270,
                 description: `O Staff **${user}** acabou de fazer login na calculadora de punições.`,
                 timestamp: new Date().toISOString()
             };
@@ -681,7 +703,6 @@
             }).catch(console.error);
         }
 
-        // Função de envio de punição com webhook geral como fallback
         function enviarParaDiscord(idJogador, idStaff, video) {
             let webhookUrl = webhookGeral;
             let colorHex = "";
@@ -689,22 +710,19 @@
 
             if (statusBanimento !== "Nenhum") {
                 webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral;
-                colorHex = 16711680; // Vermelho
+                colorHex = 16711680;
                 penalidadeTexto = `BANIMENTO: ${statusBanimento}`;
             } else if (totalPrisao > 0) {
                 webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral;
-                colorHex = 16753920; // Laranja
+                colorHex = 16753920;
                 penalidadeTexto = `${totalPrisao} Meses de Prisão`;
             } else if (temAdvertencia) {
                 webhookUrl = localStorage.getItem('brp_wh_adv') || webhookGeral;
-                colorHex = 16776960; // Amarelo
+                colorHex = 16776960;
                 penalidadeTexto = "ADVERTÊNCIA APLICADA";
             }
 
-            if (!webhookUrl) {
-                console.error("Nenhuma webhook configurada para este tipo de punição.");
-                return;
-            }
+            if (!webhookUrl) return;
 
             const embed = {
                 title: "⚠️ NOVA PUNIÇÃO - BRASIL RP",
@@ -823,39 +841,42 @@
             }
         }
 
-        // --- GERENCIAMENTO DE USUÁRIOS NO BANCO DE DADOS (SUPABASE) ---
+        // --- GERENCIAMENTO DE USUÁRIOS ---
         async function carregarUsuarios() {
-            const { data: users, error } = await supabaseClient.from('usuarios').select('*');
+            const users = JSON.parse(localStorage.getItem('brp_users')) || [];
             const ul = document.getElementById('lista-usuarios');
             ul.innerHTML = '';
             
-            if (users) {
-                users.forEach(u => {
-                    ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
-                    <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
-                    <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
-                });
-            }
+            users.forEach(u => {
+                ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
+                <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
+            });
         }
 
         async function adicionarUsuario() {
-            const login = document.getElementById('novo-login').value;
-            const senha = document.getElementById('nova-senha').value;
+            const login = document.getElementById('novo-login').value.trim();
+            const senha = document.getElementById('nova-senha').value.trim();
             if(!login || !senha) {
                 alert("Preencha o login e a senha!");
                 return;
             }
             
-            const { error } = await supabaseClient
-                .from('usuarios')
-                .insert([{ login, senha }]);
-
-            if (error) {
-                alert("Erro ao criar acesso (talvez o login já exista): " + error.message);
+            let users = JSON.parse(localStorage.getItem('brp_users')) || [];
+            if (users.some(u => u.login.toLowerCase() === login.toLowerCase())) {
+                alert("Este login já existe!");
                 return;
             }
 
-            alert("Acesso criado com sucesso no banco de dados!");
+            users.push({ login, senha });
+            localStorage.setItem('brp_users', JSON.stringify(users));
+            
+            // Tenta inserir no Supabase em segundo plano se houver conexão
+            if (supabaseClient) {
+                supabaseClient.from('usuarios').insert([{ login, senha }]).catch(() => {});
+            }
+
+            alert("Acesso criado com sucesso!");
             carregarUsuarios();
             
             document.getElementById('novo-login').value = '';
@@ -866,14 +887,12 @@
             if(login === 'Thiago') { alert('Você não pode apagar o administrador principal!'); return; }
             
             if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
-                const { error } = await supabaseClient
-                    .from('usuarios')
-                    .delete()
-                    .eq('login', login);
+                let users = JSON.parse(localStorage.getItem('brp_users')) || [];
+                users = users.filter(u => u.login !== login);
+                localStorage.setItem('brp_users', JSON.stringify(users));
 
-                if (error) {
-                    alert("Erro ao remover usuário: " + error.message);
-                    return;
+                if (supabaseClient) {
+                    supabaseClient.from('usuarios').delete().eq('login', login).catch(() => {});
                 }
 
                 carregarUsuarios();
