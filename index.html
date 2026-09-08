@@ -841,9 +841,25 @@
             }
         }
 
-        // --- GERENCIAMENTO DE USUÁRIOS ---
+        // --- GERENCIAMENTO DE USUÁRIOS COM SUPABASE E SINCRONIZAÇÃO COMPLETA ---
         async function carregarUsuarios() {
-            const users = JSON.parse(localStorage.getItem('brp_users')) || [];
+            let users = [];
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('usuarios').select('*');
+                    if (!error && data && data.length > 0) {
+                        users = data;
+                        localStorage.setItem('brp_users', JSON.stringify(users));
+                    }
+                } catch (e) {
+                    console.warn("Erro ao buscar usuários do Supabase, usando local:", e);
+                }
+            }
+
+            if (users.length === 0) {
+                users = JSON.parse(localStorage.getItem('brp_users')) || [{ login: 'Thiago', senha: 'Thiago0133' }];
+            }
+
             const ul = document.getElementById('lista-usuarios');
             ul.innerHTML = '';
             
@@ -857,6 +873,7 @@
         async function adicionarUsuario() {
             const login = document.getElementById('novo-login').value.trim();
             const senha = document.getElementById('nova-senha').value.trim();
+            
             if(!login || !senha) {
                 alert("Preencha o login e a senha!");
                 return;
@@ -868,13 +885,21 @@
                 return;
             }
 
+            // Tenta inserir no Supabase primeiro
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('usuarios').insert([{ login, senha }]);
+                    if (error) {
+                        alert("Erro ao registrar no Supabase: " + error.message);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Erro de conexão ao inserir no Supabase:", err);
+                }
+            }
+
             users.push({ login, senha });
             localStorage.setItem('brp_users', JSON.stringify(users));
-            
-            // Tenta inserir no Supabase em segundo plano se houver conexão
-            if (supabaseClient) {
-                supabaseClient.from('usuarios').insert([{ login, senha }]).catch(() => {});
-            }
 
             alert("Acesso criado com sucesso!");
             carregarUsuarios();
@@ -887,13 +912,21 @@
             if(login === 'Thiago') { alert('Você não pode apagar o administrador principal!'); return; }
             
             if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
+                if (supabaseClient) {
+                    try {
+                        const { error } = await supabaseClient.from('usuarios').delete().eq('login', login);
+                        if (error) {
+                            alert("Erro ao remover do Supabase: " + error.message);
+                            return;
+                        }
+                    } catch (err) {
+                        console.warn("Erro de conexão ao remover do Supabase:", err);
+                    }
+                }
+
                 let users = JSON.parse(localStorage.getItem('brp_users')) || [];
                 users = users.filter(u => u.login !== login);
                 localStorage.setItem('brp_users', JSON.stringify(users));
-
-                if (supabaseClient) {
-                    supabaseClient.from('usuarios').delete().eq('login', login).catch(() => {});
-                }
 
                 carregarUsuarios();
             }
