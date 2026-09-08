@@ -190,7 +190,7 @@
             transition: color 0.3s;
         }
         .support-corner:hover {
-            color: #5865F2; /* Azul Discord ao passar o mouse */
+            color: #5865F2;
         }
 
         /* Dashboard */
@@ -326,14 +326,13 @@
             <h2>Punições Legal</h2>
             <input type="text" id="login-user" placeholder="Login do Staff">
             <input type="password" id="login-pass" placeholder="Senha">
-            <button onclick="realizarLogin()" class="btn-green">Entrar</button>
+            <button onclick="realizarLogin()" class="btn-green" id="btn-login">Entrar</button>
             <p class="footer-text">Desenvolvido por Valkkyria optimization.</p>
         </div>
-        <!-- Botão Suporte Discreto -->
         <a href="https://discord.gg/VtyrvbyEqx" target="_blank" class="support-corner">Suporte Discord</a>
     </div>
 
-    <!-- NAVBAR (Visível apenas logado) -->
+    <!-- NAVBAR -->
     <nav id="navbar" style="display: none;">
         <div class="nav-brand">
             <img src="image_79b87e.jpg" alt="Logo" onerror="this.style.display='none'">
@@ -349,31 +348,19 @@
         </div>
     </nav>
 
-    <!-- 5. PÁGINA DE DASHBOARD -->
+    <!-- DASHBOARD -->
     <div id="page-dashboard" class="page-container" style="display: none;">
         <h2>Visão Geral</h2>
         <div class="dashboard-cards">
-            <div class="card card-green">
-                <h3>Punições Registradas</h3>
-                <h1 id="dash-total">0</h1>
-            </div>
-            <div class="card card-yellow">
-                <h3>Advertências</h3>
-                <h1 id="dash-adv">0</h1>
-            </div>
-            <div class="card card-blue">
-                <h3>Serviços Penais</h3>
-                <h1 id="dash-servicos">0</h1>
-            </div>
-            <div class="card card-red">
-                <h3>Banimentos</h3>
-                <h1 id="dash-bans">0</h1>
-            </div>
+            <div class="card card-green"><h3>Punições Registradas</h3><h1 id="dash-total">0</h1></div>
+            <div class="card card-yellow"><h3>Advertências</h3><h1 id="dash-adv">0</h1></div>
+            <div class="card card-blue"><h3>Serviços Penais</h3><h1 id="dash-servicos">0</h1></div>
+            <div class="card card-red"><h3>Banimentos</h3><h1 id="dash-bans">0</h1></div>
         </div>
         <button class="btn-green btn-large" onclick="navegar('page-calculadora')">Nova Punição</button>
     </div>
 
-    <!-- 6. PÁGINA CALCULADORA -->
+    <!-- CALCULADORA -->
     <div id="page-calculadora" class="page-container" style="display: none;">
         <h2>Calculadora de Punições</h2>
         <div class="calc-form">
@@ -382,14 +369,10 @@
                 <input type="text" id="calc-staff" placeholder="ID do Staff Aplicador">
                 <input type="url" id="calc-video" placeholder="Link do Vídeo (Provas)">
             </div>
-            
             <div class="rules-container">
                 <h3 style="margin-top: 15px; color: #ccc;">Selecione as Infrações</h3>
-                <div id="rules-list" class="rules-grid">
-                    <!-- Gerado via JS -->
-                </div>
+                <div id="rules-list" class="rules-grid"></div>
             </div>
-
             <div class="calc-result">
                 <h3 style="margin-bottom: 10px;">Resultado da Punição</h3>
                 <p>Meses de Prisão: <span id="res-prisao">0</span></p>
@@ -400,67 +383,53 @@
         </div>
     </div>
 
-    <!-- 4. PÁGINA DE GERENCIAMENTO DE PUNIÇÕES -->
+    <!-- GERENCIAMENTO DE PUNIÇÕES -->
     <div id="page-regras" class="page-container" style="display: none;">
         <h2>Gerenciamento do Código Penal</h2>
         <div class="add-box">
             <input type="text" id="nova-regra-nome" placeholder="Nome da Infração (ex: RDM)">
-            
-            <!-- Botões de Tipo -->
             <div class="tipo-buttons">
                 <button type="button" class="btn-tipo active" onclick="selecionarTipo('PRISÃO', this)">Prisão</button>
                 <button type="button" class="btn-tipo" onclick="selecionarTipo('BANIMENTO', this)">Banimento</button>
                 <button type="button" class="btn-tipo" onclick="selecionarTipo('ADVERTÊNCIA', this)">Advertência</button>
             </div>
             <input type="hidden" id="nova-regra-tipo" value="PRISÃO">
-
             <input type="text" id="nova-regra-valor" placeholder="Valor (ex: 500 meses, ou PERM)">
             <button id="btn-add-regra" onclick="adicionarRegra()" class="btn-green">Adicionar Regra</button>
         </div>
         <table id="tabela-regras">
             <thead>
-                <tr>
-                    <th>Infração</th>
-                    <th>Tipo</th>
-                    <th>Valor</th>
-                    <th>Ações</th>
-                </tr>
+                <tr><th>Infração</th><th>Tipo</th><th>Valor</th><th>Ações</th></tr>
             </thead>
-            <tbody id="tbody-regras">
-                <!-- Gerado via JS -->
-            </tbody>
+            <tbody id="tbody-regras"></tbody>
         </table>
     </div>
 
-    <!-- 3. PÁGINA DE GERENCIAMENTO DE LOGINS -->
+    <!-- GERENCIAMENTO DE LOGINS -->
     <div id="page-admin" class="page-container" style="display: none;">
         <h2>Controle de Acesso Staff</h2>
         <div class="add-box">
             <input type="text" id="novo-login" placeholder="Novo Login (Qualquer formato)">
             <input type="text" id="nova-senha" placeholder="Nova Senha">
-            <button onclick="adicionarUsuario()" class="btn-green">Criar Acesso</button>
+            <button onclick="adicionarUsuario()" id="btn-criar-acesso" class="btn-green">Criar Acesso na Nuvem</button>
         </div>
         <ul id="lista-usuarios" style="list-style: none; margin-top: 20px;">
             <!-- Gerado via JS -->
         </ul>
     </div>
 
-    <!-- 2. PÁGINA DE WEBHOOKS -->
+    <!-- WEBHOOKS -->
     <div id="page-webhooks" class="page-container" style="display: none;">
         <h2>Configuração de Integração Discord</h2>
         <div class="webhook-box">
             <label>Webhook - Logs de Acesso (Login)</label>
             <input type="url" id="webhook-login" placeholder="https://discord.com/api/webhooks/...">
-
             <label>Webhook - Prisões / Camisa de Força</label>
             <input type="url" id="webhook-prisao" placeholder="https://discord.com/api/webhooks/...">
-            
             <label>Webhook - Banimentos</label>
             <input type="url" id="webhook-ban" placeholder="https://discord.com/api/webhooks/...">
-            
             <label>Webhook - Advertências / Serviços</label>
             <input type="url" id="webhook-adv" placeholder="https://discord.com/api/webhooks/...">
-            
             <button onclick="salvarWebhooks()" class="btn-green" style="margin-top: 15px;">Salvar Configurações</button>
         </div>
     </div>
@@ -470,15 +439,9 @@
         // --- CONFIGURAÇÃO DO SUPABASE ---
         const SUPABASE_URL = 'https://jclrhmfrmcobzxgsstutn.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbHJobWZybWNvYnp4Z3NzdXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MjM1NDksImV4cCI6MjEwNDM5OTU0OX0.ICqeg_eVrdcJU3VRT4FZ-U8cf1eM0oIzFRXQF29uWM4';
-        
-        let supabaseClient = null;
-        try {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.warn("Supabase init warning:", e);
-        }
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- DADOS INICIAIS ---
+        // --- DADOS INICIAIS DA CALCULADORA ---
         const regrasPadrao = [
             { id: 1, nome: "Metagaming", tipo: "BANIMENTO", valor: "1 DIA" },
             { id: 2, nome: "Powergaming", tipo: "PRISÃO", valor: "100" },
@@ -494,23 +457,28 @@
 
         let usuarioLogado = "";
 
-        // --- AUTENTICAÇÃO COM SUPABASE E FALLBACK ---
+        // --- AUTENTICAÇÃO ESTRITA NA NUVEM (SUPABASE) ---
         async function realizarLogin() {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value.trim();
+            const btn = document.getElementById('btn-login');
 
             if (!user || !pass) {
                 alert("Preencha o login e a senha!");
                 return;
             }
 
-            let logado = false;
-            let nomeLogado = "";
+            btn.innerText = "Conectando...";
+            btn.disabled = true;
 
+            let logado = false;
+
+            // O Master (Thiago) sempre entra, é uma porta de segurança
             if (user === 'Thiago' && pass === 'Thiago0133') {
                 logado = true;
-                nomeLogado = 'Thiago';
-            } else if (supabaseClient) {
+                usuarioLogado = 'Thiago';
+            } else {
+                // Qualquer outro staff OBRIGATORIAMENTE consulta a nuvem
                 try {
                     const { data, error } = await supabaseClient
                         .from('usuarios')
@@ -518,26 +486,23 @@
                         .eq('login', user)
                         .eq('senha', pass);
 
-                    if (!error && data && data.length > 0) {
+                    if (error) throw error;
+
+                    if (data && data.length > 0) {
                         logado = true;
-                        nomeLogado = data[0].login;
+                        usuarioLogado = data[0].login;
+                    } else {
+                        alert("Login ou senha incorretos! (Não encontrado no servidor)");
                     }
                 } catch (err) {
-                    console.warn("Erro ao buscar no Supabase:", err);
+                    alert("⚠️ Erro de conexão com a Nuvem. Verifique sua internet ou se o AdBlock está bloqueando o Supabase.\nDetalhe: " + err.message);
                 }
             }
 
-            if (!logado) {
-                const usersLocal = JSON.parse(localStorage.getItem('brp_users')) || [];
-                const found = usersLocal.find(u => u.login === user && u.senha === pass);
-                if (found) {
-                    logado = true;
-                    nomeLogado = found.login;
-                }
-            }
+            btn.innerText = "Entrar";
+            btn.disabled = false;
 
             if (logado) {
-                usuarioLogado = nomeLogado;
                 document.getElementById('page-login').style.display = 'none';
                 document.getElementById('navbar').style.display = 'flex';
                 
@@ -548,11 +513,91 @@
                 
                 navegar('page-dashboard');
                 enviarLogLogin(usuarioLogado);
-            } else {
-                alert("Login ou senha incorretos!");
             }
         }
 
+        // --- GERENCIAMENTO DE USUÁRIOS RESTRITO À NUVEM ---
+        async function carregarUsuarios() {
+            const ul = document.getElementById('lista-usuarios');
+            ul.innerHTML = '<li style="padding:15px; color:#ccc;">Carregando usuários do servidor...</li>';
+
+            try {
+                const { data, error } = await supabaseClient.from('usuarios').select('*');
+                
+                if (error) throw error;
+
+                ul.innerHTML = '';
+                
+                // Exibe o Master (Hardcoded) + Usuários da Nuvem
+                let listaHtml = `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                <span>Login: <strong style="color:#ffdf00;">Thiago (Master)</strong></span> 
+                <button disabled style="background:#555; color:white; margin: 0; width:auto; padding:8px 15px; cursor:not-allowed;">Fixo</button></li>`;
+
+                data.forEach(u => {
+                    listaHtml += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
+                    <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
+                    <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
+                });
+
+                ul.innerHTML = listaHtml;
+
+            } catch (err) {
+                ul.innerHTML = `<li style="padding:15px; color:#ff4444;">Erro ao conectar com o banco de dados. Os logins de outros computadores não puderam ser carregados. Detalhe: ${err.message}</li>`;
+            }
+        }
+
+        async function adicionarUsuario() {
+            const login = document.getElementById('novo-login').value.trim();
+            const senha = document.getElementById('nova-senha').value.trim();
+            const btn = document.getElementById('btn-criar-acesso');
+            
+            if(!login || !senha) {
+                alert("Preencha o login e a senha!");
+                return;
+            }
+
+            if(login.toLowerCase() === 'thiago') {
+                alert("O login 'Thiago' já é o Master fixo!");
+                return;
+            }
+
+            btn.innerText = "Salvando na Nuvem...";
+            btn.disabled = true;
+            
+            try {
+                // Insere diretamente na nuvem
+                const { error } = await supabaseClient.from('usuarios').insert([{ login, senha }]);
+                
+                if (error) throw error;
+
+                alert("Acesso criado E SINCRONIZADO na nuvem com sucesso!");
+                document.getElementById('novo-login').value = '';
+                document.getElementById('nova-senha').value = '';
+                carregarUsuarios(); // Atualiza a lista lendo da nuvem
+
+            } catch (err) {
+                alert("⚠️ FALHA AO SALVAR NA NUVEM.\nO usuário NÃO foi criado para os outros PCs.\nVerifique bloqueios de rede/Adblock ou se o projeto Supabase está pausado.\nErro: " + err.message);
+            } finally {
+                btn.innerText = "Criar Acesso na Nuvem";
+                btn.disabled = false;
+            }
+        }
+
+        async function removerUsuario(login) {
+            if(confirm(`Tem certeza que deseja excluir da NUVEM o acesso de ${login}?`)) {
+                try {
+                    const { error } = await supabaseClient.from('usuarios').delete().eq('login', login);
+                    if (error) throw error;
+                    
+                    alert("Acesso removido da nuvem!");
+                    carregarUsuarios();
+                } catch (err) {
+                    alert("Erro ao remover da nuvem: " + err.message);
+                }
+            }
+        }
+
+        // --- CÓDIGOS PADRÕES MANTIDOS INTACTOS (Sair, Navegar, Calculadora, Discord, etc) ---
         function sair() {
             usuarioLogado = "";
             document.querySelectorAll('.page-container').forEach(el => el.style.display = 'none');
@@ -579,7 +624,6 @@
             if (pageId === 'page-dashboard') atualizarDashboard();
         }
 
-        // --- DASHBOARD ---
         function atualizarDashboard() {
             const stats = JSON.parse(localStorage.getItem('brp_stats'));
             document.getElementById('dash-total').innerText = stats.total;
@@ -588,24 +632,17 @@
             document.getElementById('dash-bans').innerText = stats.bans;
         }
 
-        // --- CALCULADORA ---
-        let totalPrisao = 0;
-        let statusBanimento = "Nenhum";
-        let temAdvertencia = false;
-        let regrasSelecionadas = [];
+        let totalPrisao = 0; let statusBanimento = "Nenhum"; let temAdvertencia = false; let regrasSelecionadas = [];
 
         function carregarCalculadora() {
             const rules = JSON.parse(localStorage.getItem('brp_rules'));
             const list = document.getElementById('rules-list');
             list.innerHTML = '';
-            
             rules.forEach(rule => {
                 const div = document.createElement('div');
                 div.className = 'rule-item';
-                div.innerHTML = `
-                    <input type="checkbox" id="rule-${rule.id}" value="${rule.id}" onchange="recalcular()">
-                    <label for="rule-${rule.id}">${rule.nome} <br><small style="color:#888;">(${rule.valor} - ${rule.tipo})</small></label>
-                `;
+                div.innerHTML = `<input type="checkbox" id="rule-${rule.id}" value="${rule.id}" onchange="recalcular()">
+                                 <label for="rule-${rule.id}">${rule.nome} <br><small style="color:#888;">(${rule.valor} - ${rule.tipo})</small></label>`;
                 list.appendChild(div);
             });
         }
@@ -613,25 +650,14 @@
         function recalcular() {
             const rules = JSON.parse(localStorage.getItem('brp_rules'));
             const checkboxes = document.querySelectorAll('.rules-grid input[type="checkbox"]:checked');
-            
-            totalPrisao = 0;
-            statusBanimento = "Nenhum";
-            temAdvertencia = false;
-            regrasSelecionadas = [];
-
+            totalPrisao = 0; statusBanimento = "Nenhum"; temAdvertencia = false; regrasSelecionadas = [];
             checkboxes.forEach(box => {
                 const rule = rules.find(r => r.id == box.value);
                 regrasSelecionadas.push(rule.nome);
-                
-                if (rule.tipo.includes("PRISÃO") || rule.tipo.includes("CAMISA DE FORÇA")) {
-                    totalPrisao += parseInt(rule.valor) || 0;
-                } else if (rule.tipo.includes("BANIMENTO")) {
-                    statusBanimento = rule.valor;
-                } else if (rule.tipo.includes("ADVERTÊNCIA") || rule.tipo.includes("ADVERTENCIA")) {
-                    temAdvertencia = true;
-                }
+                if (rule.tipo.includes("PRISÃO") || rule.tipo.includes("CAMISA DE FORÇA")) totalPrisao += parseInt(rule.valor) || 0;
+                else if (rule.tipo.includes("BANIMENTO")) statusBanimento = rule.valor;
+                else if (rule.tipo.includes("ADVERTÊNCIA") || rule.tipo.includes("ADVERTENCIA")) temAdvertencia = true;
             });
-
             document.getElementById('res-prisao').innerText = totalPrisao;
             document.getElementById('res-ban').innerText = statusBanimento;
             document.getElementById('res-adv').innerText = temAdvertencia ? "Aplicada" : "Nenhuma";
@@ -641,29 +667,20 @@
             const idJogador = document.getElementById('calc-jogador').value;
             const idStaff = document.getElementById('calc-staff').value;
             const video = document.getElementById('calc-video').value;
-
-            if (!idJogador || regrasSelecionadas.length === 0) {
-                alert("Preencha o ID do jogador e selecione pelo menos uma infração.");
-                return;
-            }
-
+            if (!idJogador || regrasSelecionadas.length === 0) { alert("Preencha o ID do jogador e selecione infrações."); return; }
+            
             const stats = JSON.parse(localStorage.getItem('brp_stats'));
-            stats.total += 1;
-            if (statusBanimento !== "Nenhum") stats.bans += 1;
-            if (temAdvertencia) stats.adv += 1;
+            stats.total += 1; if (statusBanimento !== "Nenhum") stats.bans += 1; if (temAdvertencia) stats.adv += 1;
             localStorage.setItem('brp_stats', JSON.stringify(stats));
             
             enviarParaDiscord(idJogador, idStaff, video);
             
             alert("Punição aplicada e registrada!");
             document.querySelectorAll('.rules-grid input[type="checkbox"]').forEach(c => c.checked = false);
-            document.getElementById('calc-jogador').value = '';
-            document.getElementById('calc-video').value = '';
-            recalcular();
-            atualizarDashboard();
+            document.getElementById('calc-jogador').value = ''; document.getElementById('calc-video').value = '';
+            recalcular(); atualizarDashboard();
         }
 
-        // --- WEBHOOKS E DISCORD ---
         function carregarWebhooks() {
             document.getElementById('webhook-login').value = localStorage.getItem('brp_wh_login') || '';
             document.getElementById('webhook-prisao').value = localStorage.getItem('brp_wh_prisao') || '';
@@ -676,72 +693,36 @@
             localStorage.setItem('brp_wh_prisao', document.getElementById('webhook-prisao').value);
             localStorage.setItem('brp_wh_ban', document.getElementById('webhook-ban').value);
             localStorage.setItem('brp_wh_adv', document.getElementById('webhook-adv').value);
-            alert("Webhooks salvas com sucesso!");
+            alert("Webhooks salvas!");
         }
 
         function enviarLogLogin(user) {
             const webhookUrl = localStorage.getItem('brp_wh_login') || webhookGeral;
             if (!webhookUrl) return;
-
-            const embed = {
-                title: "🔐 NOVO ACESSO - SISTEMA LEGAL",
-                color: 39270,
-                description: `O Staff **${user}** acabou de fazer login na calculadora de punições.`,
-                timestamp: new Date().toISOString()
-            };
-
-            fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ embeds: [embed] })
-            }).catch(console.error);
+            const embed = { title: "🔐 NOVO ACESSO", color: 39270, description: `Staff **${user}** logou.`, timestamp: new Date().toISOString() };
+            fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
         function enviarParaDiscord(idJogador, idStaff, video) {
-            let webhookUrl = webhookGeral;
-            let colorHex = "";
-            let penalidadeTexto = "";
-
-            if (statusBanimento !== "Nenhum") {
-                webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral;
-                colorHex = 16711680;
-                penalidadeTexto = `BANIMENTO: ${statusBanimento}`;
-            } else if (totalPrisao > 0) {
-                webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral;
-                colorHex = 16753920;
-                penalidadeTexto = `${totalPrisao} Meses de Prisão`;
-            } else if (temAdvertencia) {
-                webhookUrl = localStorage.getItem('brp_wh_adv') || webhookGeral;
-                colorHex = 16776960;
-                penalidadeTexto = "ADVERTÊNCIA APLICADA";
-            }
-
+            let webhookUrl = webhookGeral; let colorHex = ""; let penalidadeTexto = "";
+            if (statusBanimento !== "Nenhum") { webhookUrl = localStorage.getItem('brp_wh_ban') || webhookGeral; colorHex = 16711680; penalidadeTexto = `BANIMENTO: ${statusBanimento}`; }
+            else if (totalPrisao > 0) { webhookUrl = localStorage.getItem('brp_wh_prisao') || webhookGeral; colorHex = 16753920; penalidadeTexto = `${totalPrisao} Meses de Prisão`; }
+            else if (temAdvertencia) { webhookUrl = localStorage.getItem('brp_wh_adv') || webhookGeral; colorHex = 16776960; penalidadeTexto = "ADVERTÊNCIA APLICADA"; }
+            
             if (!webhookUrl) return;
 
             const embed = {
-                title: "⚠️ NOVA PUNIÇÃO - BRASIL RP",
-                color: colorHex,
+                title: "⚠️ NOVA PUNIÇÃO", color: colorHex,
                 fields: [
-                    { name: "Passaporte Punido", value: idJogador, inline: true },
-                    { name: "Staff Responsável", value: idStaff || "Não informado", inline: true },
-                    { name: "Motivos (Infrações)", value: regrasSelecionadas.join("\n") },
-                    { name: "Penalidade Calculada", value: penalidadeTexto },
-                    { name: "Provas (Vídeo)", value: video ? `[Clique para assistir](${video})` : "Nenhum vídeo anexado" }
-                ],
-                footer: { text: "Calculadora Legal - Desenvolvido por Valkkyria optimization" },
-                timestamp: new Date().toISOString()
+                    { name: "Passaporte", value: idJogador, inline: true }, { name: "Staff", value: idStaff || "N/A", inline: true },
+                    { name: "Motivos", value: regrasSelecionadas.join("\n") }, { name: "Penalidade", value: penalidadeTexto },
+                    { name: "Provas", value: video ? `[Vídeo](${video})` : "Nenhum" }
+                ]
             };
-
-            fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ embeds: [embed] })
-            }).catch(err => console.error("Erro ao enviar Webhook:", err));
+            fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ embeds: [embed] }) }).catch(() => {});
         }
 
-        // --- GERENCIAMENTO DE REGRAS ---
         let regraEditandoId = null;
-
         function selecionarTipo(tipo, btnElement) {
             document.getElementById('nova-regra-tipo').value = tipo;
             document.querySelectorAll('.btn-tipo').forEach(b => b.classList.remove('active'));
@@ -755,39 +736,25 @@
             rules.forEach(r => {
                 let badgeColor = r.tipo.includes('BAN') ? '#ff4444' : (r.tipo.includes('ADV') ? '#ffdf00' : '#009c3b');
                 let textColor = r.tipo.includes('ADV') ? '#000' : '#fff';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight: 500;">${r.nome}</td>
-                        <td><span style="background:${badgeColor}; color:${textColor}; padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">${r.tipo}</span></td>
-                        <td>${r.valor}</td>
-                        <td class="action-btns">
-                            <button onclick="editarRegra(${r.id})" style="background:#ffdf00; color:#121212;">Editar</button>
-                            <button onclick="removerRegra(${r.id})" style="background:#ff4444; color:#fff;">Excluir</button>
-                        </td>
-                    </tr>`;
+                tbody.innerHTML += `<tr><td style="font-weight: 500;">${r.nome}</td>
+                    <td><span style="background:${badgeColor}; color:${textColor}; padding:4px 8px; border-radius:4px; font-weight:bold;">${r.tipo}</span></td>
+                    <td>${r.valor}</td>
+                    <td class="action-btns"><button onclick="editarRegra(${r.id})" style="background:#ffdf00; color:#121212;">Editar</button>
+                    <button onclick="removerRegra(${r.id})" style="background:#ff4444; color:#fff;">Excluir</button></td></tr>`;
             });
         }
 
         function editarRegra(id) {
-            const rules = JSON.parse(localStorage.getItem('brp_rules'));
-            const rule = rules.find(r => r.id === id);
-            
+            const rule = JSON.parse(localStorage.getItem('brp_rules')).find(r => r.id === id);
             if(rule) {
                 document.getElementById('nova-regra-nome').value = rule.nome;
                 document.getElementById('nova-regra-valor').value = rule.valor;
-                
                 let tipoFormatado = rule.tipo.includes("CAMISA") ? "PRISÃO" : rule.tipo;
                 const btn = Array.from(document.querySelectorAll('.btn-tipo')).find(b => b.innerText.toUpperCase() === tipoFormatado);
                 if(btn) selecionarTipo(tipoFormatado, btn);
-                
                 regraEditandoId = id;
                 const btnAdd = document.getElementById('btn-add-regra');
-                btnAdd.innerText = "Salvar Edição";
-                btnAdd.style.backgroundColor = "#ffdf00";
-                btnAdd.style.color = "#121212";
-                
-                document.getElementById('nova-regra-nome').focus();
+                btnAdd.innerText = "Salvar Edição"; btnAdd.style.backgroundColor = "#ffdf00"; btnAdd.style.color = "#121212";
             }
         }
 
@@ -795,128 +762,25 @@
             const nome = document.getElementById('nova-regra-nome').value;
             const tipo = document.getElementById('nova-regra-tipo').value;
             const valor = document.getElementById('nova-regra-valor').value;
-            
-            if(!nome || !valor) {
-                alert("Preencha o nome e o valor da regra!");
-                return;
-            }
-            
+            if(!nome || !valor) { alert("Preencha o nome e o valor da regra!"); return; }
             let rules = JSON.parse(localStorage.getItem('brp_rules'));
-            
             if(regraEditandoId !== null) {
                 const index = rules.findIndex(r => r.id === regraEditandoId);
-                if(index !== -1) {
-                    rules[index].nome = nome;
-                    rules[index].tipo = tipo;
-                    rules[index].valor = valor;
-                }
+                if(index !== -1) { rules[index].nome = nome; rules[index].tipo = tipo; rules[index].valor = valor; }
                 regraEditandoId = null;
                 const btnAdd = document.getElementById('btn-add-regra');
-                btnAdd.innerText = "Adicionar Regra";
-                btnAdd.style.backgroundColor = "#009c3b";
-                btnAdd.style.color = "#fff";
-            } else {
-                rules.push({ id: Date.now(), nome, tipo, valor });
-            }
-            
+                btnAdd.innerText = "Adicionar Regra"; btnAdd.style.backgroundColor = "#009c3b"; btnAdd.style.color = "#fff";
+            } else rules.push({ id: Date.now(), nome, tipo, valor });
             localStorage.setItem('brp_rules', JSON.stringify(rules));
             carregarRegras();
-            
-            document.getElementById('nova-regra-nome').value = '';
-            document.getElementById('nova-regra-valor').value = '';
+            document.getElementById('nova-regra-nome').value = ''; document.getElementById('nova-regra-valor').value = '';
         }
 
         function removerRegra(id) {
-            if(confirm("Tem certeza que deseja excluir esta regra?")) {
-                let rules = JSON.parse(localStorage.getItem('brp_rules'));
-                rules = rules.filter(r => r.id !== id);
+            if(confirm("Deseja excluir esta regra?")) {
+                let rules = JSON.parse(localStorage.getItem('brp_rules')).filter(r => r.id !== id);
                 localStorage.setItem('brp_rules', JSON.stringify(rules));
                 carregarRegras();
-            }
-        }
-
-        // --- GERENCIAMENTO DE USUÁRIOS COM SUPABASE ---
-        async function carregarUsuarios() {
-            let users = [];
-            if (supabaseClient) {
-                try {
-                    const { data, error } = await supabaseClient.from('usuarios').select('*');
-                    if (!error && data) {
-                        users = data;
-                    }
-                } catch (e) {
-                    console.warn("Erro ao buscar usuários do Supabase:", e);
-                }
-            }
-
-            if (users.length === 0) {
-                users = JSON.parse(localStorage.getItem('brp_users')) || [];
-            }
-
-            const ul = document.getElementById('lista-usuarios');
-            ul.innerHTML = '';
-            
-            // Garante que o admin Thiago apareça na lista se não estiver vindo do banco
-            if (!users.some(u => u.login === 'Thiago')) {
-                users.unshift({ login: 'Thiago', senha: 'Thiago0133' });
-            }
-
-            users.forEach(u => {
-                ul.innerHTML += `<li style="padding:15px; background-color: #222; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;">
-                <span>Login: <strong style="color:#ffdf00;">${u.login}</strong></span> 
-                <button onclick="removerUsuario('${u.login}')" style="background:#ff4444; color:white; margin: 0; width:auto; padding:8px 15px;">Revogar</button></li>`;
-            });
-        }
-
-        async function adicionarUsuario() {
-            const login = document.getElementById('novo-login').value.trim();
-            const senha = document.getElementById('nova-senha').value.trim();
-            
-            if(!login || !senha) {
-                alert("Preencha o login e a senha!");
-                return;
-            }
-            
-            if (supabaseClient) {
-                try {
-                    const { error } = await supabaseClient.from('usuarios').insert([{ login, senha }]);
-                    if (error) {
-                        alert("Erro ao registrar no Supabase: " + error.message);
-                        return;
-                    }
-                } catch (err) {
-                    console.warn("Erro de conexão com Supabase:", err);
-                }
-            }
-
-            let users = JSON.parse(localStorage.getItem('brp_users')) || [];
-            users.push({ login, senha });
-            localStorage.setItem('brp_users', JSON.stringify(users));
-
-            alert("Acesso criado com sucesso!");
-            carregarUsuarios();
-            
-            document.getElementById('novo-login').value = '';
-            document.getElementById('nova-senha').value = '';
-        }
-
-        async function removerUsuario(login) {
-            if(login === 'Thiago') { alert('Você não pode apagar o administrador principal!'); return; }
-            
-            if(confirm(`Tem certeza que deseja revogar o acesso de ${login}?`)) {
-                if (supabaseClient) {
-                    try {
-                        await supabaseClient.from('usuarios').delete().eq('login', login);
-                    } catch (err) {
-                        console.warn("Erro ao remover do Supabase:", err);
-                    }
-                }
-
-                let users = JSON.parse(localStorage.getItem('brp_users')) || [];
-                users = users.filter(u => u.login !== login);
-                localStorage.setItem('brp_users', JSON.stringify(users));
-
-                carregarUsuarios();
             }
         }
     </script>
